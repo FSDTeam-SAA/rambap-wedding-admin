@@ -1,268 +1,180 @@
 'use client';
 
 import { useState } from 'react';
-import { mockRsvps } from '@/lib/mock-data';
-import type { Rsvp } from '@/lib/types';
-import { Button } from '@/components/ui/button';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Edit, Plus, Trash2 } from 'lucide-react';
+
+import { Loader2, Search } from 'lucide-react';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+const RSVP_ENDPOINT = `${API_BASE}/rsvp`;
+
+type Rsvp = {
+  _id: string;
+  guestName: string;
+  attendance: boolean; // true = attending, false = not attending
+  guestNumber?: number;
+  mealPreference?: string;
+  message?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 export function RsvpManager() {
-  const [rsvps, setRsvps] = useState<Rsvp[]>(mockRsvps);
-  const [isOpen, setIsOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<Rsvp>>({});
+  const queryClient = useQueryClient();
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU'
+
+  // ── Fetch all RSVPs ──────────────────────────────────────────
+  const { data: rsvps = [], isLoading, isError, error } = useQuery<Rsvp[]>({
+    queryKey: ['rsvps'],
+    queryFn: async () => {
+      const res = await fetch(RSVP_ENDPOINT, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // ← add when auth is ready
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to load RSVPs');
+      }
+
+      const json = await res.json();
+      return json.data || []; // adjust if your response shape is different
+    },
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleOpen = (rsvp?: Rsvp) => {
-    if (rsvp) {
-      setFormData(rsvp);
-      setEditingId(rsvp.id);
-    } else {
-      setFormData({
-        guestName: '',
-        attendance: 'pending',
-        guestNumber: 1,
-        mealPreference: '',
-        message: '',
-      });
-      setEditingId(null);
-    }
-    setIsOpen(true);
-  };
-
-  const handleSave = () => {
-    if (editingId) {
-      setRsvps(
-        rsvps.map((r) =>
-          r.id === editingId ? { ...r, ...formData } : r
-        )
-      );
-    } else {
-      setRsvps([
-        ...rsvps,
-        { ...formData, id: Date.now().toString() } as Rsvp,
-      ]);
-    }
-    setIsOpen(false);
-  };
-
-  const handleDelete = (id: string) => {
-    setRsvps(rsvps.filter((r) => r.id !== id));
-  };
-
-  const handleInputChange = (
-    field: keyof Rsvp,
-    value: string | number
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
+  // Filter RSVPs by search
   const filteredRsvps = rsvps.filter((r) =>
     r.guestName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const attendingCount = rsvps.filter((r) => r.attendance === 'attending').length;
-  const declinedCount = rsvps.filter((r) => r.attendance === 'not-attending').length;
-  const pendingCount = rsvps.filter((r) => r.attendance === 'pending').length;
+  // Stats
+  const attending = rsvps.filter((r) => r.attendance === true).length;
+  const notAttending = rsvps.filter((r) => r.attendance === false).length;
+  const pending = rsvps.filter((r) => r.attendance === null || r.attendance === undefined).length;
+
+
+
+
+  if (isLoading) {
+    return (
+      <div className="p-8 flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-8 text-center text-destructive">
+        Failed to load RSVPs
+        <p className="text-sm mt-2">{(error as Error)?.message}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-8 space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">RSVPs</h2>
-          <p className="text-muted-foreground mt-1">
-            Manage guest responses
-          </p>
-        </div>
-        <Button
-          onClick={() => handleOpen()}
-          className="gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add RSVP
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="border border-border rounded-lg p-4 bg-accent/5">
-          <p className="text-sm text-muted-foreground">Attending</p>
-          <p className="text-2xl font-bold text-foreground">{attendingCount}</p>
-        </div>
-        <div className="border border-border rounded-lg p-4 bg-accent/5">
-          <p className="text-sm text-muted-foreground">Not Attending</p>
-          <p className="text-2xl font-bold text-foreground">{declinedCount}</p>
-        </div>
-        <div className="border border-border rounded-lg p-4 bg-accent/5">
-          <p className="text-sm text-muted-foreground">Pending</p>
-          <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
+          <h2 className="text-2xl font-bold">RSVP Management</h2>
+          <p className="text-muted-foreground">View and update guest responses</p>
         </div>
       </div>
 
-      <div className="mb-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="border rounded-xl p-6 bg-green-50/50 dark:bg-green-950/30">
+          <p className="text-sm text-green-700 dark:text-green-300">Attending</p>
+          <p className="text-3xl font-bold mt-2">{attending}</p>
+        </div>
+        <div className="border rounded-xl p-6 bg-red-50/50 dark:bg-red-950/30">
+          <p className="text-sm text-red-700 dark:text-red-300">Not Attending</p>
+          <p className="text-3xl font-bold mt-2">{notAttending}</p>
+        </div>
+        <div className="border rounded-xl p-6 bg-yellow-50/50 dark:bg-yellow-950/30">
+          <p className="text-sm text-yellow-700 dark:text-yellow-300">Pending</p>
+          <p className="text-3xl font-bold mt-2">{pending}</p>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search guests..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
         />
       </div>
 
+      {/* RSVP List */}
       <div className="space-y-4">
-        {filteredRsvps.map((rsvp) => (
-          <div
-            key={rsvp.id}
-            className="border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors"
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground">{rsvp.guestName}</h3>
-                  <span
-                    className={`text-xs px-2 py-1 rounded ${
-                      rsvp.attendance === 'attending'
-                        ? 'bg-green-100 text-green-800'
-                        : rsvp.attendance === 'not-attending'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}
-                  >
-                    {rsvp.attendance}
-                  </span>
+        {filteredRsvps.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground border border-dashed rounded-xl">
+            {searchTerm ? 'No matching RSVPs found' : 'No RSVPs received yet'}
+          </div>
+        ) : (
+          filteredRsvps.map((rsvp) => (
+            <div
+              key={rsvp._id}
+              className="border rounded-xl p-5 bg-card hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-semibold text-lg">{rsvp.guestName}</h3>
+                    <span
+                      className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${rsvp.attendance === true
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                          : rsvp.attendance === false
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
+                        }`}
+                    >
+                      {rsvp.attendance === true
+                        ? 'Attending'
+                        : rsvp.attendance === false
+                          ? 'Not Attending'
+                          : 'Pending'}
+                    </span>
+                  </div>
+
+                  <div className="text-sm text-muted-foreground flex flex-wrap gap-x-6 gap-y-1">
+                    <div>Guests: <strong>{rsvp.guestNumber ?? 1}</strong></div>
+                    {rsvp.mealPreference && (
+                      <div>Meal: <strong>{rsvp.mealPreference}</strong></div>
+                    )}
+                    {rsvp.createdAt && (
+                      <div>
+                        Submitted:{' '}
+                        {new Date(rsvp.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {rsvp.message && (
+                    <p className="text-sm italic text-muted-foreground mt-2 border-l-2 pl-3">
+                      "{rsvp.message}"
+                    </p>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Guests: {rsvp.guestNumber} • Meal: {rsvp.mealPreference}
-                </p>
-                {rsvp.message && (
-                  <p className="text-sm text-muted-foreground mt-2 italic">
-                    "{rsvp.message}"
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleOpen(rsvp)}
-                  className="gap-1"
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDelete(rsvp.id)}
-                  className="gap-1 text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </Button>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
-
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingId ? 'Edit RSVP' : 'Add RSVP'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="guestName">Guest Name</Label>
-              <Input
-                id="guestName"
-                value={formData.guestName || ''}
-                onChange={(e) =>
-                  handleInputChange('guestName', e.target.value)
-                }
-                placeholder="Full name"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="attendance">Attendance</Label>
-              <Select
-                value={formData.attendance || 'pending'}
-                onValueChange={(value: any) =>
-                  handleInputChange('attendance', value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="attending">Attending</SelectItem>
-                  <SelectItem value="not-attending">Not Attending</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="guestNumber">Number of Guests</Label>
-              <Input
-                id="guestNumber"
-                type="number"
-                min="1"
-                value={formData.guestNumber || 1}
-                onChange={(e) =>
-                  handleInputChange('guestNumber', parseInt(e.target.value))
-                }
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="mealPreference">Meal Preference</Label>
-              <Input
-                id="mealPreference"
-                value={formData.mealPreference || ''}
-                onChange={(e) =>
-                  handleInputChange('mealPreference', e.target.value)
-                }
-                placeholder="e.g., Vegetarian, Gluten-free"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="message">Message</Label>
-              <Textarea
-                id="message"
-                value={formData.message || ''}
-                onChange={(e) =>
-                  handleInputChange('message', e.target.value)
-                }
-                placeholder="Guest message"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSave}>
-                {editingId ? 'Update' : 'Create'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

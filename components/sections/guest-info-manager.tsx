@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -84,7 +85,10 @@ export function GuestInfoManager() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<GuestInfo>>({});
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU'
+
+  // ⚠️  Consider moving this token to a more secure place (cookies, httpOnly, env + auth context)
+  const token =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU';
 
   /* ---------- FETCH ---------- */
   const { data: guestInfo, isLoading, isError, error } = useQuery<GuestInfo>({
@@ -239,19 +243,18 @@ export function GuestInfoManager() {
         {guestInfo?.gifts && <PreviewGifts section={guestInfo.gifts} />}
       </div>
 
-      {/* EDIT DIALOG - FIXED VERSION */}
+      {/* EDIT DIALOG */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-full max-w-4xl p-0 overflow-hidden">
-
+        <DialogContent className="w-full max-w-4xl hide-scrollbar p-0 overflow-scroll max-h-[90dvh]">
           {/* Fixed Header */}
           <DialogHeader className="px-6 pt-6 pb-4 border-b bg-background sticky top-0 z-20">
             <DialogTitle className="text-2xl">Edit Guest Information</DialogTitle>
           </DialogHeader>
 
-          {/* Scrollable Content Area */}
-          <div className="max-h-[80dvh] overflow-y-auto overscroll-y-contain px-6 py-6">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 py-6">
             <Tabs defaultValue="accommodation" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 sticky top-0 bg-background z-10 border-b mb-6">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 sticky top-0 bg-background z-10 border-b mb-6">
                 <TabsTrigger value="accommodation">Accommodation</TabsTrigger>
                 <TabsTrigger value="carRental">Car Rental</TabsTrigger>
                 <TabsTrigger value="dressCode">Dress Code</TabsTrigger>
@@ -328,7 +331,6 @@ export function GuestInfoManager() {
 
               {/* CAR RENTAL */}
               <TabsContent value="carRental" className="space-y-6 pt-2">
-                {/* ... same structure as accommodation ... */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Title</Label>
@@ -540,24 +542,11 @@ export function GuestInfoManager() {
           </div>
 
           {/* Fixed Footer */}
-          <div className="
-            flex justify-end gap-4 
-            px-6 py-4 
-            border-t 
-            bg-background 
-            sticky bottom-0 z-20
-          ">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsOpen(false)} 
-              disabled={isPending}
-            >
+          <div className="flex justify-end gap-4 px-6 py-4 border-t bg-background sticky bottom-0 z-20">
+            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>
               Cancel
             </Button>
-            <Button 
-              onClick={() => mutate(formData)} 
-              disabled={isPending}
-            >
+            <Button onClick={() => mutate(formData)} disabled={isPending}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -568,7 +557,6 @@ export function GuestInfoManager() {
               )}
             </Button>
           </div>
-
         </DialogContent>
       </Dialog>
     </div>
@@ -576,7 +564,6 @@ export function GuestInfoManager() {
 }
 
 /* ---------- PREVIEW COMPONENTS ---------- */
-// (unchanged - keeping your original preview components)
 
 function PreviewCard({ section }: { section: any }) {
   return (

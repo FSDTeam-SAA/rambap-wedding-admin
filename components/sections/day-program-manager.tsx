@@ -1,276 +1,1284 @@
+// 'use client';
+
+// import { useState, ChangeEvent } from 'react';
+// import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// import { toast } from 'sonner';
+// import { Button } from '@/components/ui/button';
+// import { Input } from '@/components/ui/input';
+// import { Label } from '@/components/ui/label';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogFooter,
+// } from '@/components/ui/dialog';
+// import { Textarea } from '@/components/ui/textarea';
+// import { Loader2, Edit, X, Plus, Clock } from 'lucide-react';
+
+// const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+// const PROGRAM_ENDPOINT = `${API_BASE}/details/program`;
+
+// type DayProgramItem = {
+//   time: string;
+//   title: string;
+//   description: string;
+//   icon?: string;
+//   mapUrl?: string;
+// };
+
+// type DayProgram = {
+//   _id?: string;
+//   title?: string;
+//   subtitle?: string;
+//   items: DayProgramItem[];
+//   printUrl?: string;
+//   createdAt?: string;
+//   updatedAt?: string;
+// };
+
+// export function DayProgramManager() {
+//   const queryClient = useQueryClient();
+//   const token =
+//     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU';
+
+
+//   // ── Fetch current day program (single document) ──────────────
+//   const { data: program, isLoading, isError, error } = useQuery<DayProgram>({
+//     queryKey: ['dayProgram'],
+//     queryFn: async () => {
+//       const res = await fetch(PROGRAM_ENDPOINT, {
+//         method: 'GET',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           // Authorization: `Bearer ${token}`, // ← add when auth is ready
+//         },
+//       });
+
+//       if (!res.ok) {
+//         const err = await res.json().catch(() => ({}));
+//         throw new Error(err.message || 'Failed to load day program');
+//       }
+
+//       const json = await res.json();
+//       return json.data ?? { items: [] };
+//     },
+//   });
+
+//   // ── Update day program (title/subtitle + items + icons) ──────
+//   const updateMutation = useMutation({
+//     mutationFn: async (formData: FormData) => {
+//       const res = await fetch(PROGRAM_ENDPOINT, {
+//         method: 'PUT',
+//         body: formData,
+//         // Do NOT set Content-Type – browser sets multipart/form-data
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       if (!res.ok) {
+//         const err = await res.json().catch(() => ({}));
+//         throw new Error(err.message || 'Failed to update day program');
+//       }
+
+//       return res.json();
+//     },
+//     onSuccess: () => {
+//       toast.success('Day program updated successfully');
+//       queryClient.invalidateQueries({ queryKey: ['dayProgram'] });
+//       setIsOpen(false);
+//       setNewIcons({});
+//     },
+//     onError: (err: Error) => {
+//       toast.error(err.message || 'Failed to update day program');
+//     },
+//   });
+
+//   const [isOpen, setIsOpen] = useState(false);
+//   const [formData, setFormData] = useState<Partial<DayProgram>>({ items: [] });
+//   const [newIcons, setNewIcons] = useState<Record<number, File>>({});
+
+//   const handleOpen = () => {
+//     setFormData({
+//       title: program?.title || '',
+//       subtitle: program?.subtitle || '',
+//       items: program?.items || [],
+//       printUrl: program?.printUrl || '',
+//     });
+//     setNewIcons({});
+//     setIsOpen(true);
+//   };
+
+//   const updateField = (field: keyof DayProgram, value: any) => {
+//     setFormData((prev) => ({ ...prev, [field]: value }));
+//   };
+
+//   const addItem = () => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       items: [...(prev.items || []), { time: '', title: '', description: '' }],
+//     }));
+//   };
+
+//   const removeItem = (index: number) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       items: (prev.items || []).filter((_, i) => i !== index),
+//     }));
+//     // Also remove any pending icon for this index
+//     setNewIcons((prev) => {
+//       const { [index]: _, ...rest } = prev;
+//       return rest;
+//     });
+//   };
+
+//   const updateItem = (index: number, field: keyof DayProgramItem, value: string) => {
+//     setFormData((prev) => {
+//       const items = [...(prev.items || [])];
+//       if (items[index]) {
+//         items[index] = { ...items[index], [field]: value };
+//       }
+//       return { ...prev, items };
+//     });
+//   };
+
+//   const handleIconChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
+//     if (e.target.files?.[0]) {
+//       setNewIcons((prev) => ({ ...prev, [index]: e.target.files![0] }));
+//     }
+//   };
+
+//   const handleSave = () => {
+//     if (!formData.title?.trim()) {
+//       toast.error('Program title is required');
+//       return;
+//     }
+//     if (formData.items?.length === 0) {
+//       toast.error('Add at least one timeline item');
+//       return;
+//     }
+
+//     const payload = new FormData();
+
+//     // Text fields
+//     if (formData.title) payload.append('title', formData.title);
+//     if (formData.subtitle) payload.append('subtitle', formData.subtitle);
+//     if (formData.printUrl) payload.append('printUrl', formData.printUrl);
+
+//     // Items as JSON string
+//     payload.append('items', JSON.stringify(formData.items));
+
+//     // Icon files with dynamic field names: items[0][icon], items[1][icon], etc.
+//     Object.entries(newIcons).forEach(([indexStr, file]) => {
+//       const index = Number(indexStr);
+//       payload.append(`items[${index}][icon]`, file);
+//     });
+
+//     updateMutation.mutate(payload);
+//   };
+
+//   if (isLoading) {
+//     return (
+//       <div className="p-8 flex justify-center items-center min-h-[400px]">
+//         <Loader2 className="h-10 w-10 animate-spin text-primary" />
+//       </div>
+//     );
+//   }
+
+//   if (isError) {
+//     return (
+//       <div className="p-8 text-center text-destructive">
+//         Failed to load day program
+//         <p className="text-sm mt-2">{(error as Error)?.message}</p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="p-8 space-y-8">
+//       {/* Header */}
+//       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+//         <div>
+//           <h2 className="text-2xl font-bold">Wedding Day Program</h2>
+//           <p className="text-muted-foreground">Manage the timeline and schedule</p>
+//         </div>
+//         <Button onClick={handleOpen} className="gap-2">
+//           <Edit className="h-4 w-4" />
+//           Edit Program
+//         </Button>
+//       </div>
+
+//       {/* Current Program Preview */}
+//       {program && (program.title || program.items?.length > 0) ? (
+//         <div className="border rounded-xl p-6 bg-card shadow-sm space-y-6">
+//           {(program.title || program.subtitle) && (
+//             <div className="text-center">
+//               <h3 className="text-xl font-semibold">{program.title || 'Our Big Day'}</h3>
+//               {program.subtitle && (
+//                 <p className="text-sm text-muted-foreground mt-1">{program.subtitle}</p>
+//               )}
+//               {/* {program.printUrl && (
+//                 <a
+//                   href={program.printUrl}
+//                   target="_blank"
+//                   rel="noopener noreferrer"
+//                   className="text-sm text-primary hover:underline mt-2 inline-block"
+//                 >
+//                   Download Printable Schedule →
+//                 </a>
+//               )} */}
+//             </div>
+//           )}
+
+//           {program.items?.length > 0 ? (
+//             <div className="space-y-5">
+//               {program.items.map((item, idx) => (
+//                 <div
+//                   key={idx}
+//                   className="flex flex-col sm:flex-row gap-4 p-4 border rounded-lg bg-muted/30"
+//                 >
+//                   <div className="flex items-center gap-4 sm:w-32 shrink-0">
+//                     {item.icon && (
+//                       <img
+//                         src={item.icon}
+//                         alt=""
+//                         className="w-10 h-10 object-contain"
+//                       />
+//                     )}
+//                     <div className="font-medium text-lg whitespace-nowrap">
+//                       {item.time}
+//                     </div>
+//                   </div>
+//                   <div className="flex-1">
+//                     <h4 className="font-semibold">{item.title}</h4>
+//                     <p className="text-sm text-muted-foreground mt-1">
+//                       {item.description}
+//                     </p>
+//                     {item.mapUrl && (
+//                       <a
+//                         href={item.mapUrl}
+//                         target="_blank"
+//                         rel="noopener noreferrer"
+//                         className="text-xs text-primary hover:underline mt-2 inline-block"
+//                       >
+//                         View on Map →
+//                       </a>
+//                     )}
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           ) : (
+//             <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
+//               No timeline items added yet
+//             </div>
+//           )}
+
+//           {program.updatedAt && (
+//             <p className="text-xs text-muted-foreground text-center">
+//               Last updated: {new Date(program.updatedAt).toLocaleDateString()}
+//             </p>
+//           )}
+//         </div>
+//       ) : (
+//         <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground bg-muted/30">
+//           No day program configured yet.<br />
+//           Click "Edit Program" to add the wedding day schedule.
+//         </div>
+//       )}
+
+//       {/* Edit Dialog */}
+//       <Dialog open={isOpen} onOpenChange={setIsOpen}>
+//         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+//           <DialogHeader>
+//             <DialogTitle>Edit Wedding Day Program</DialogTitle>
+//           </DialogHeader>
+
+//           <div className="space-y-8 py-6">
+//             {/* Title, Subtitle, Print URL */}
+//             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+//               <div>
+//                 <Label htmlFor="title">Program Title *</Label>
+//                 <Input
+//                   id="title"
+//                   value={formData.title || ''}
+//                   onChange={(e) => updateField('title', e.target.value)}
+//                   placeholder="e.g. Our Perfect Day"
+//                 />
+//               </div>
+//               <div>
+//                 <Label htmlFor="subtitle">Subtitle (optional)</Label>
+//                 <Input
+//                   id="subtitle"
+//                   value={formData.subtitle || ''}
+//                   onChange={(e) => updateField('subtitle', e.target.value)}
+//                   placeholder="e.g. From 'I do' to forever"
+//                 />
+//               </div>
+//               {/* <div>
+//                 <Label htmlFor="printUrl">Printable Schedule URL (optional)</Label>
+//                 <Input
+//                   id="printUrl"
+//                   value={formData.printUrl || ''}
+//                   onChange={(e) => updateField('printUrl', e.target.value)}
+//                   placeholder="https://example.com/schedule.pdf"
+//                 />
+//               </div> */}
+//             </div>
+
+//             {/* Timeline Items */}
+//             <div>
+//               <div className="flex items-center justify-between mb-4">
+//                 <Label>Timeline Items *</Label>
+//                 <Button variant="outline" size="sm" onClick={addItem}>
+//                   <Plus className="h-4 w-4 mr-2" />
+//                   Add Event
+//                 </Button>
+//               </div>
+
+//               <div className="space-y-6">
+//                 {(formData.items || []).map((item, idx) => (
+//                   <div
+//                     key={idx}
+//                     className="border rounded-lg p-5 bg-muted/30 space-y-4 relative"
+//                   >
+//                     <Button
+//                       variant="ghost"
+//                       size="icon"
+//                       className="absolute top-3 right-3 text-destructive hover:text-destructive/80"
+//                       onClick={() => removeItem(idx)}
+//                     >
+//                       <X className="h-5 w-5" />
+//                     </Button>
+
+//                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+//                       <div>
+//                         <Label className="text-sm">Time *</Label>
+//                         <Input
+//                           type="time"
+//                           value={item.time}
+//                           onChange={(e) => updateItem(idx, 'time', e.target.value)}
+//                           placeholder="14:00"
+//                         />
+//                       </div>
+//                       <div className="md:col-span-3">
+//                         <Label className="text-sm">Event Title *</Label>
+//                         <Input
+//                           value={item.title}
+//                           onChange={(e) => updateItem(idx, 'title', e.target.value)}
+//                           placeholder="Ceremony begins"
+//                         />
+//                       </div>
+//                     </div>
+
+//                     <div>
+//                       <Label className="text-sm">Description</Label>
+//                       <Textarea
+//                         value={item.description}
+//                         onChange={(e) => updateItem(idx, 'description', e.target.value)}
+//                         placeholder="Short description of the event..."
+//                         rows={2}
+//                       />
+//                     </div>
+
+//                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                       <div>
+//                         <Label className="text-sm">Icon (optional)</Label>
+//                         <Input
+//                           type="file"
+//                           accept="image/*"
+//                           onChange={(e) => handleIconChange(idx, e)}
+//                         />
+//                         {newIcons[idx] && (
+//                           <p className="text-xs text-muted-foreground mt-1">
+//                             Selected: {newIcons[idx].name}
+//                           </p>
+//                         )}
+//                         {!newIcons[idx] && item.icon && (
+//                           <p className="text-xs text-muted-foreground mt-1">
+//                             Current: {item.icon.split('/').pop()}
+//                           </p>
+//                         )}
+//                       </div>
+//                       <div>
+//                         <Label className="text-sm">Map URL (optional)</Label>
+//                         <Input
+//                           value={item.mapUrl || ''}
+//                           onChange={(e) => updateItem(idx, 'mapUrl', e.target.value)}
+//                           placeholder="https://maps.app.goo.gl/..."
+//                         />
+//                       </div>
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             </div>
+//           </div>
+
+//           <DialogFooter className="gap-3 pt-6 border-t sticky bottom-0 bg-background">
+//             <Button
+//               variant="outline"
+//               onClick={() => setIsOpen(false)}
+//               disabled={updateMutation.isPending}
+//             >
+//               Cancel
+//             </Button>
+//             <Button
+//               onClick={handleSave}
+//               disabled={updateMutation.isPending}
+//             >
+//               {updateMutation.isPending ? (
+//                 <>
+//                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+//                   Saving...
+//                 </>
+//               ) : (
+//                 'Save Schedule'
+//               )}
+//             </Button>
+//           </DialogFooter>
+//         </DialogContent>
+//       </Dialog>
+//     </div>
+//   );
+// }
+
+
+// 'use client';
+
+// import { useState, ChangeEvent } from 'react';
+// import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// import { toast } from 'sonner';
+// import { Button } from '@/components/ui/button';
+// import { Input } from '@/components/ui/input';
+// import { Label } from '@/components/ui/label';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogFooter,
+// } from '@/components/ui/dialog';
+// import { Textarea } from '@/components/ui/textarea';
+// import { Loader2, Edit, X, Plus } from 'lucide-react';
+
+// const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+// const PROGRAM_ENDPOINT = `${API_BASE}/details/program`;
+
+// type DayProgramItem = {
+//   time: string;
+//   title: string;
+//   description: string;
+//   icon?: string;
+//   mapUrl?: string;
+// };
+
+// type DayProgram = {
+//   _id?: string;
+//   title?: string;
+//   subtitle?: string;
+//   items: DayProgramItem[];
+//   printUrl?: string;
+//   createdAt?: string;
+//   updatedAt?: string;
+// };
+
+// export function DayProgramManager() {
+//   const queryClient = useQueryClient();
+//   const token =
+//     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU';
+
+//   // ── Fetch current day program ────────────────────────────────
+//   const { data: program, isLoading, isError, error } = useQuery<DayProgram>({
+//     queryKey: ['dayProgram'],
+//     queryFn: async () => {
+//       const res = await fetch(PROGRAM_ENDPOINT, {
+//         method: 'GET',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           // Authorization: `Bearer ${token}`, // ← uncomment when auth is active
+//         },
+//       });
+
+//       if (!res.ok) {
+//         const errData = await res.json().catch(() => ({}));
+//         throw new Error(errData.message || 'Failed to load day program');
+//       }
+
+//       const json = await res.json();
+//       return json.data ?? { items: [] };
+//     },
+//   });
+
+//   // ── Update day program (with icons) ──────────────────────────
+//   const updateMutation = useMutation({
+//     mutationFn: async (formData: FormData) => {
+//       const res = await fetch(PROGRAM_ENDPOINT, {
+//         method: 'PUT',
+//         body: formData,
+//         // Do NOT set Content-Type – browser handles multipart/form-data
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       if (!res.ok) {
+//         const errData = await res.json().catch(() => ({}));
+//         throw new Error(errData.message || 'Failed to update day program');
+//       }
+
+//       return res.json();
+//     },
+//     onSuccess: () => {
+//       toast.success('Day program updated successfully');
+//       queryClient.invalidateQueries({ queryKey: ['dayProgram'] });
+//       setIsOpen(false);
+//       setNewIcons({});
+//     },
+//     onError: (err: Error) => {
+//       toast.error(err.message || 'Failed to update day program');
+//     },
+//   });
+
+//   const [isOpen, setIsOpen] = useState(false);
+//   const [formData, setFormData] = useState<Partial<DayProgram>>({ items: [] });
+//   const [newIcons, setNewIcons] = useState<Record<number, File>>({});
+
+//   const handleOpen = () => {
+//     setFormData({
+//       title: program?.title || '',
+//       subtitle: program?.subtitle || '',
+//       items: program?.items || [],
+//       printUrl: program?.printUrl || '',
+//     });
+//     setNewIcons({});
+//     setIsOpen(true);
+//   };
+
+//   // ── Field & Item Helpers ─────────────────────────────────────
+//   const updateField = (field: keyof DayProgram, value: any) => {
+//     setFormData((prev) => ({ ...prev, [field]: value }));
+//   };
+
+//   const addItem = () => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       items: [...(prev.items || []), { time: '', title: '', description: '' }],
+//     }));
+//   };
+
+//   const removeItem = (index: number) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       items: (prev.items || []).filter((_, i) => i !== index),
+//     }));
+//     setNewIcons((prev) => {
+//       const { [index]: _, ...rest } = prev;
+//       return rest;
+//     });
+//   };
+
+//   const updateItem = (index: number, field: keyof DayProgramItem, value: string) => {
+//     setFormData((prev) => {
+//       const items = [...(prev.items || [])];
+//       if (items[index]) {
+//         items[index] = { ...items[index], [field]: value };
+//       }
+//       return { ...prev, items };
+//     });
+//   };
+
+//   const handleIconChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
+//     if (e.target.files?.[0]) {
+//       setNewIcons((prev) => ({ ...prev, [index]: e.target.files![0] }));
+//     }
+//   };
+
+//   const handleSave = () => {
+//     if (!formData.title?.trim()) {
+//       toast.error('Program title is required');
+//       return;
+//     }
+//     if (formData.items?.length === 0) {
+//       toast.error('Add at least one timeline item');
+//       return;
+//     }
+
+//     const payload = new FormData();
+
+//     // Text fields
+//     if (formData.title) payload.append('title', formData.title);
+//     if (formData.subtitle) payload.append('subtitle', formData.subtitle);
+//     if (formData.printUrl) payload.append('printUrl', formData.printUrl);
+
+//     // Items as JSON string
+//     payload.append('items', JSON.stringify(formData.items));
+
+//     // Upload new icons with correct field names
+//     Object.entries(newIcons).forEach(([indexStr, file]) => {
+//       const index = Number(indexStr);
+//       payload.append(`items[${index}][icon]`, file);
+//     });
+
+//     updateMutation.mutate(payload);
+//   };
+
+//   if (isLoading) {
+//     return (
+//       <div className="p-8 flex justify-center items-center min-h-[400px]">
+//         <Loader2 className="h-10 w-10 animate-spin text-primary" />
+//       </div>
+//     );
+//   }
+
+//   if (isError) {
+//     return (
+//       <div className="p-8 text-center text-destructive">
+//         Failed to load day program
+//         <p className="text-sm mt-2">{(error as Error)?.message}</p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="p-8 space-y-8">
+//       {/* Header */}
+//       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+//         <div>
+//           <h2 className="text-2xl font-bold">Wedding Day Program</h2>
+//           <p className="text-muted-foreground">Manage the full-day timeline</p>
+//         </div>
+//         <Button onClick={handleOpen} className="gap-2">
+//           <Edit className="h-4 w-4" />
+//           Edit Schedule
+//         </Button>
+//       </div>
+
+//       {/* Preview */}
+//       {program && (program.title || program.items?.length > 0) ? (
+//         <div className="border rounded-xl p-6 bg-card shadow-sm space-y-6">
+//           {(program.title || program.subtitle) && (
+//             <div className="text-center pb-4 border-b">
+//               <h3 className="text-2xl font-semibold">{program.title || 'Our Wedding Day'}</h3>
+//               {program.subtitle && (
+//                 <p className="text-muted-foreground mt-1">{program.subtitle}</p>
+//               )}
+//               {program.printUrl && (
+//                 <a
+//                   href={program.printUrl}
+//                   target="_blank"
+//                   rel="noopener noreferrer"
+//                   className="text-sm text-primary hover:underline mt-2 inline-block"
+//                 >
+//                   View Printable Version →
+//                 </a>
+//               )}
+//             </div>
+//           )}
+
+//           {program.items?.length > 0 ? (
+//             <div className="space-y-6">
+//               {program.items.map((item, idx) => (
+//                 <div
+//                   key={idx}
+//                   className="flex flex-col sm:flex-row gap-5 p-5 border rounded-lg bg-muted/30"
+//                 >
+//                   <div className="flex items-center gap-4 sm:w-32 shrink-0">
+//                     {item.icon && (
+//                       <img
+//                         src={item.icon}
+//                         alt=""
+//                         className="w-12 h-12 object-contain"
+//                       />
+//                     )}
+//                     <div className="font-medium text-xl whitespace-nowrap">
+//                       {item.time}
+//                     </div>
+//                   </div>
+
+//                   <div className="flex-1">
+//                     <h4 className="font-semibold text-lg">{item.title}</h4>
+//                     <p className="text-muted-foreground mt-2 leading-relaxed">
+//                       {item.description}
+//                     </p>
+//                     {item.mapUrl && (
+//                       <a
+//                         href={item.mapUrl}
+//                         target="_blank"
+//                         rel="noopener noreferrer"
+//                         className="text-sm text-primary hover:underline mt-3 inline-block"
+//                       >
+//                         View Location →
+//                       </a>
+//                     )}
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           ) : (
+//             <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
+//               No events scheduled yet
+//             </div>
+//           )}
+
+//           {program.updatedAt && (
+//             <p className="text-xs text-muted-foreground text-center pt-4 border-t">
+//               Last updated: {new Date(program.updatedAt).toLocaleString()}
+//             </p>
+//           )}
+//         </div>
+//       ) : (
+//         <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground bg-muted/30">
+//           No day program configured yet.<br />
+//           Click "Edit Schedule" to build the timeline.
+//         </div>
+//       )}
+
+//       {/* Edit Dialog */}
+//       <Dialog open={isOpen} onOpenChange={setIsOpen}>
+//         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+//           <DialogHeader>
+//             <DialogTitle>Edit Wedding Day Program</DialogTitle>
+//           </DialogHeader>
+
+//           <div className="space-y-8 py-6">
+//             {/* Basic Info */}
+//             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+//               <div>
+//                 <Label htmlFor="title">Program Title *</Label>
+//                 <Input
+//                   id="title"
+//                   value={formData.title || ''}
+//                   onChange={(e) => updateField('title', e.target.value)}
+//                   placeholder="e.g. Our Perfect Day"
+//                 />
+//               </div>
+//               <div>
+//                 <Label htmlFor="subtitle">Subtitle (optional)</Label>
+//                 <Input
+//                   id="subtitle"
+//                   value={formData.subtitle || ''}
+//                   onChange={(e) => updateField('subtitle', e.target.value)}
+//                   placeholder="e.g. From vows to celebration"
+//                 />
+//               </div>
+//             </div>
+
+//             {/* Timeline Items */}
+//             <div>
+//               <div className="flex items-center justify-between mb-4">
+//                 <Label>Timeline Events *</Label>
+//                 <Button variant="outline" size="sm" onClick={addItem}>
+//                   <Plus className="h-4 w-4 mr-2" />
+//                   Add Event
+//                 </Button>
+//               </div>
+
+//               <div className="space-y-6">
+//                 {(formData.items || []).map((item, idx) => (
+//                   <div
+//                     key={idx}
+//                     className="border rounded-lg p-5 bg-muted/30 space-y-5 relative"
+//                   >
+//                     <Button
+//                       variant="ghost"
+//                       size="icon"
+//                       className="absolute top-4 right-4 text-destructive hover:text-destructive/80"
+//                       onClick={() => removeItem(idx)}
+//                     >
+//                       <X className="h-5 w-5" />
+//                     </Button>
+
+//                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+//                       <div>
+//                         <Label className="text-sm">Time *</Label>
+//                         <Input
+//                           type="time"
+//                           value={item.time}
+//                           onChange={(e) => updateItem(idx, 'time', e.target.value)}
+//                         />
+//                       </div>
+//                       <div className="md:col-span-3">
+//                         <Label className="text-sm">Event Title *</Label>
+//                         <Input
+//                           value={item.title}
+//                           onChange={(e) => updateItem(idx, 'title', e.target.value)}
+//                           placeholder="Ceremony begins"
+//                         />
+//                       </div>
+//                     </div>
+
+//                     <div>
+//                       <Label className="text-sm">Description</Label>
+//                       <Textarea
+//                         value={item.description}
+//                         onChange={(e) => updateItem(idx, 'description', e.target.value)}
+//                         placeholder="Details about the event..."
+//                         rows={2}
+//                       />
+//                     </div>
+
+//                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                       <div>
+//                         <Label className="text-sm">Icon (optional)</Label>
+//                         <Input
+//                           type="file"
+//                           accept="image/*"
+//                           onChange={(e) => handleIconChange(idx, e)}
+//                         />
+//                         {newIcons[idx] && (
+//                           <p className="text-xs text-muted-foreground mt-1 truncate">
+//                             Selected: {newIcons[idx].name}
+//                           </p>
+//                         )}
+//                         {!newIcons[idx] && item.icon && (
+//                           <p className="text-xs text-muted-foreground mt-1 truncate">
+//                             Current: {item.icon.split('/').pop()}
+//                           </p>
+//                         )}
+//                       </div>
+
+//                       <div>
+//                         <Label className="text-sm">Map URL (optional)</Label>
+//                         <Input
+//                           value={item.mapUrl || ''}
+//                           onChange={(e) => updateItem(idx, 'mapUrl', e.target.value)}
+//                           placeholder="https://maps.app.goo.gl/..."
+//                         />
+//                       </div>
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             </div>
+//           </div>
+
+//           <DialogFooter className="gap-3 pt-6 border-t sticky bottom-0 bg-background z-10">
+//             <Button
+//               variant="outline"
+//               onClick={() => setIsOpen(false)}
+//               disabled={updateMutation.isPending}
+//             >
+//               Cancel
+//             </Button>
+//             <Button
+//               onClick={handleSave}
+//               disabled={updateMutation.isPending}
+//             >
+//               {updateMutation.isPending ? (
+//                 <>
+//                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+//                   Saving...
+//                 </>
+//               ) : (
+//                 'Save Schedule'
+//               )}
+//             </Button>
+//           </DialogFooter>
+//         </DialogContent>
+//       </Dialog>
+//     </div>
+//   );
+// }
+
 'use client';
 
-import { useState } from 'react';
-import { mockDayPrograms } from '@/lib/mock-data';
-import type { DayProgram, DayProgramItem } from '@/lib/types';
+import { useState, ChangeEvent } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Edit, Plus, Trash2, X } from 'lucide-react';
+import { Loader2, Edit, X, Plus } from 'lucide-react';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+const PROGRAM_ENDPOINT = `${API_BASE}/details/program`;
+
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU';
+
+type DayProgramItem = {
+  time: string;
+  title: string;
+  description: string;
+  icon?: string;
+  mapUrl?: string;
+};
+
+type DayProgram = {
+  _id?: string;
+  title?: string;
+
+  subtitle?: string;
+  items: DayProgramItem[];
+  printUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 export function DayProgramManager() {
-  const [programs, setPrograms] = useState<DayProgram[]>(mockDayPrograms);
-  const [isOpen, setIsOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<DayProgram>>({});
+  const queryClient = useQueryClient();
 
-  const handleOpen = (program?: DayProgram) => {
-    if (program) {
-      setFormData(program);
-      setEditingId(program.id);
-    } else {
-      setFormData({
-        title: '',
-        subtitle: '',
-        items: [],
-        printUrl: '',
+  // Fetch current day program
+  const { data: program, isLoading, isError, error } = useQuery<DayProgram>({
+    queryKey: ['dayProgram'],
+    queryFn: async () => {
+      const res = await fetch(PROGRAM_ENDPOINT, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${TOKEN}`,
+        },
       });
-      setEditingId(null);
-    }
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to load day program');
+      }
+
+      const json = await res.json();
+      return json.data ?? { items: [] };
+    },
+  });
+
+  // Update mutation (text + icons)
+  const updateMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch(PROGRAM_ENDPOINT, {
+        method: 'PUT',
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to update day program');
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success('Day program updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['dayProgram'] });
+      setIsOpen(false);
+      setNewIcons({});
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to update day program');
+    },
+  });
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<DayProgram>>({ items: [] });
+  const [newIcons, setNewIcons] = useState<Record<number, File>>({});
+
+  const handleOpen = () => {
+    setFormData({
+      title: program?.title || '',
+      subtitle: program?.subtitle || '',
+      items: program?.items || [],
+      printUrl: program?.printUrl || '',
+    });
+    setNewIcons({});
     setIsOpen(true);
   };
 
-  const handleSave = () => {
-    if (editingId) {
-      setPrograms(
-        programs.map((p) =>
-          p.id === editingId ? { ...p, ...formData } : p
-        )
-      );
-    } else {
-      setPrograms([
-        ...programs,
-        { ...formData, id: Date.now().toString() } as DayProgram,
-      ]);
-    }
-    setIsOpen(false);
-  };
-
-  const handleDelete = (id: string) => {
-    setPrograms(programs.filter((p) => p.id !== id));
-  };
-
-  const handleInputChange = (
-    field: keyof DayProgram,
-    value: any
-  ) => {
+  // ── Helpers ──────────────────────────────────────────────────
+  const updateField = (field: keyof DayProgram, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAddItem = () => {
-    const items = formData.items || [];
-    handleInputChange('items', [
-      ...items,
-      { time: '', title: '', description: '', icon: '' },
-    ]);
+  const addItem = () => {
+    setFormData((prev) => ({
+      ...prev,
+      items: [...(prev.items || []), { time: '', title: '', description: '' }],
+    }));
   };
 
-  const handleRemoveItem = (index: number) => {
-    const items = formData.items || [];
-    handleInputChange('items', items.filter((_, i) => i !== index));
+  const removeItem = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      items: (prev.items || []).filter((_, i) => i !== index),
+    }));
+    // Clean up any pending icon for this index
+    setNewIcons((prev) => {
+      const { [index]: _, ...rest } = prev;
+      return rest;
+    });
   };
 
-  const handleItemChange = (
-    index: number,
-    field: keyof DayProgramItem,
-    value: string
-  ) => {
-    const items = formData.items || [];
-    items[index] = { ...items[index], [field]: value };
-    handleInputChange('items', [...items]);
+  const updateItem = (index: number, field: keyof DayProgramItem, value: string) => {
+    setFormData((prev) => {
+      const items = [...(prev.items || [])];
+      if (items[index]) {
+        items[index] = { ...items[index], [field]: value };
+      }
+      return { ...prev, items };
+    });
   };
+
+  const handleIconChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setNewIcons((prev) => ({ ...prev, [index]: e.target.files![0] }));
+    }
+  };
+
+  const handleSave = () => {
+    if (!formData.title?.trim()) {
+      toast.error('Program title is required');
+      return;
+    }
+    if (formData.items?.length === 0) {
+      toast.error('Add at least one timeline item');
+      return;
+    }
+
+    const payload = new FormData();
+
+    // Text fields
+    if (formData.title) payload.append('title', formData.title);
+    if (formData.subtitle) payload.append('subtitle', formData.subtitle);
+    if (formData.printUrl) payload.append('printUrl', formData.printUrl);
+
+    // Items array as JSON string — without icon fields
+    payload.append('items', JSON.stringify(formData.items));
+
+    // Icons as separate files with correct naming
+    Object.entries(newIcons).forEach(([indexStr, file]) => {
+      const index = Number(indexStr);
+      payload.append(`items[${index}][icon]`, file);
+    });
+
+    updateMutation.mutate(payload);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-8 flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-8 text-center text-destructive">
+        Failed to load day program
+        <p className="text-sm mt-2">{(error as Error)?.message}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-8 space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Day Program</h2>
-          <p className="text-muted-foreground mt-1">
-            Manage wedding day schedule
-          </p>
+          <h2 className="text-2xl font-bold">Wedding Day Program</h2>
+          <p className="text-muted-foreground">Manage the full-day timeline</p>
         </div>
-        <Button
-          onClick={() => handleOpen()}
-          className="gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Program
+        <Button onClick={handleOpen} className="gap-2">
+          <Edit className="h-4 w-4" />
+          Edit Schedule
         </Button>
       </div>
 
-      <div className="space-y-4">
-        {programs.map((program) => (
-          <div
-            key={program.id}
-            className="border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors"
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">{program.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {program.subtitle}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {program.items.length} events
-                </p>
-                <div className="mt-2 space-y-1">
-                  {program.items.slice(0, 3).map((item, idx) => (
-                    <p key={idx} className="text-xs text-muted-foreground">
-                      {item.time} - {item.title}
+      {/* Preview */}
+      {program && (program.title || program.items?.length > 0) ? (
+        <div className="border rounded-xl p-6 bg-card shadow-sm space-y-6">
+          {(program.title || program.subtitle) && (
+            <div className="text-center pb-4 border-b">
+              <h3 className="text-2xl font-semibold">{program.title || 'Our Wedding Day'}</h3>
+              {program.subtitle && (
+                <p className="text-sm text-muted-foreground mt-1">{program.subtitle}</p>
+              )}
+              {program.printUrl && (
+                <a
+                  href={program.printUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline mt-2 inline-block"
+                >
+                  View Printable Schedule →
+                </a>
+              )}
+            </div>
+          )}
+
+          {program.items?.length > 0 ? (
+            <div className="space-y-6">
+              {program.items.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col sm:flex-row gap-5 p-5 border rounded-lg bg-muted/30"
+                >
+                  <div className="flex items-center gap-4 sm:w-32 shrink-0">
+                    {item.icon && (
+                      <img
+                        src={item.icon}
+                        alt=""
+                        className="w-12 h-12 object-contain rounded-full"
+                      />
+                    )}
+                    <div className="font-medium text-xl whitespace-nowrap">
+                      {item.time}
+                    </div>
+                  </div>
+
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-lg">{item.title}</h4>
+                    <p className="text-muted-foreground mt-2 leading-relaxed">
+                      {item.description}
                     </p>
-                  ))}
+                    {item.mapUrl && (
+                      <a
+                        href={item.mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline mt-3 inline-block"
+                      >
+                        View Location →
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleOpen(program)}
-                  className="gap-1"
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDelete(program.id)}
-                  className="gap-1 text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </Button>
-              </div>
+              ))}
             </div>
-          </div>
-        ))}
-      </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
+              No events scheduled yet
+            </div>
+          )}
 
+          {program.updatedAt && (
+            <p className="text-xs text-muted-foreground text-center pt-4 border-t">
+              Last updated: {new Date(program.updatedAt).toLocaleString()}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground bg-muted/30">
+          No day program configured yet.<br />
+          Click "Edit Schedule" to build the timeline.
+        </div>
+      )}
+
+      {/* Edit Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
-            <DialogTitle>
-              {editingId ? 'Edit Program' : 'Add Program'}
-            </DialogTitle>
+            <DialogTitle>Edit Wedding Day Program</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Program Title</Label>
-              <Input
-                id="title"
-                value={formData.title || ''}
-                onChange={(e) =>
-                  handleInputChange('title', e.target.value)
-                }
-                placeholder="Wedding Day Schedule"
-              />
+
+          <div className="space-y-8 py-6">
+            {/* Title & Subtitle */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="title">Program Title *</Label>
+                <Input
+                  id="title"
+                  value={formData.title || ''}
+                  onChange={(e) => updateField('title', e.target.value)}
+                  placeholder="e.g. Our Perfect Day"
+                />
+              </div>
+              <div>
+                <Label htmlFor="subtitle">Subtitle (optional)</Label>
+                <Input
+                  id="subtitle"
+                  value={formData.subtitle || ''}
+                  onChange={(e) => updateField('subtitle', e.target.value)}
+                  placeholder="e.g. From vows to celebration"
+                />
+              </div>
             </div>
 
+            {/* Timeline Items */}
             <div>
-              <Label htmlFor="subtitle">Subtitle</Label>
-              <Input
-                id="subtitle"
-                value={formData.subtitle || ''}
-                onChange={(e) =>
-                  handleInputChange('subtitle', e.target.value)
-                }
-                placeholder="Schedule subtitle"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="printUrl">Print URL</Label>
-              <Input
-                id="printUrl"
-                value={formData.printUrl || ''}
-                onChange={(e) =>
-                  handleInputChange('printUrl', e.target.value)
-                }
-                placeholder="https://example.com/schedule.pdf"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <Label>Timeline Items</Label>
-                <Button
-                  size="sm"
-                  onClick={handleAddItem}
-                  className="gap-1"
-                >
-                  <Plus className="w-3 h-3" />
-                  Add Item
+              <div className="flex items-center justify-between mb-4">
+                <Label>Timeline Events *</Label>
+                <Button variant="outline" size="sm" onClick={addItem}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Event
                 </Button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-6">
                 {(formData.items || []).map((item, idx) => (
-                  <div key={idx} className="border border-border rounded p-3 space-y-2">
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Label className="text-xs">Time</Label>
+                  <div
+                    key={idx}
+                    className="border rounded-lg p-5 bg-muted/30 space-y-5 relative"
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-4 right-4 text-destructive hover:text-destructive/80"
+                      onClick={() => removeItem(idx)}
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label className="text-sm">Time *</Label>
                         <Input
-                          value={item.time}
-                          onChange={(e) =>
-                            handleItemChange(idx, 'time', e.target.value)
-                          }
-                          placeholder="14:00"
                           type="time"
+                          value={item.time}
+                          onChange={(e) => updateItem(idx, 'time', e.target.value)}
                         />
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemoveItem(idx)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+                      <div className="md:col-span-3">
+                        <Label className="text-sm">Event Title *</Label>
+                        <Input
+                          value={item.title}
+                          onChange={(e) => updateItem(idx, 'title', e.target.value)}
+                          placeholder="Ceremony begins"
+                        />
+                      </div>
                     </div>
 
                     <div>
-                      <Label className="text-xs">Title</Label>
-                      <Input
-                        value={item.title}
-                        onChange={(e) =>
-                          handleItemChange(idx, 'title', e.target.value)
-                        }
-                        placeholder="Event title"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Description</Label>
+                      <Label className="text-sm">Description</Label>
                       <Textarea
                         value={item.description}
-                        onChange={(e) =>
-                          handleItemChange(idx, 'description', e.target.value)
-                        }
-                        placeholder="Event description"
-                        className="h-20"
+                        onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                        placeholder="Details about the event..."
+                        rows={2}
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-xs">Icon</Label>
+                        <Label className="text-sm">Icon (optional)</Label>
                         <Input
-                          value={item.icon}
-                          onChange={(e) =>
-                            handleItemChange(idx, 'icon', e.target.value)
-                          }
-                          placeholder="Icon name"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleIconChange(idx, e)}
                         />
+                        {newIcons[idx] && (
+                          <p className="text-xs text-muted-foreground mt-1 truncate max-w-[180px]">
+                            Selected: {newIcons[idx].name}
+                          </p>
+                        )}
+                        {!newIcons[idx] && item.icon && (
+                          <p className="text-xs text-muted-foreground mt-1 truncate max-w-[180px]">
+                            Current: {item.icon.split('/').pop()}
+                          </p>
+                        )}
                       </div>
+
                       <div>
-                        <Label className="text-xs">Map URL</Label>
+                        <Label className="text-sm">Map URL (optional)</Label>
                         <Input
                           value={item.mapUrl || ''}
-                          onChange={(e) =>
-                            handleItemChange(idx, 'mapUrl', e.target.value)
-                          }
-                          placeholder="Map link (optional)"
+                          onChange={(e) => updateItem(idx, 'mapUrl', e.target.value)}
+                          placeholder="https://maps.app.goo.gl/..."
                         />
                       </div>
                     </div>
@@ -278,19 +1286,30 @@ export function DayProgramManager() {
                 ))}
               </div>
             </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSave}>
-                {editingId ? 'Update' : 'Create'}
-              </Button>
-            </div>
           </div>
+
+          <DialogFooter className="gap-3 pt-6 border-t sticky bottom-0 bg-background z-10">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              disabled={updateMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Schedule'
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
