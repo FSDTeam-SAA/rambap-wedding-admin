@@ -29,7 +29,7 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
     { id: 'rsvp', label: 'RSVPs', icon: Menu },
     { id: 'menu', label: 'Wedding Menu', icon: UtensilsCrossed },
     { id: 'day-program', label: 'Day Program', icon: Clock },
-    { id: 'user', label: 'Users', icon: User },
+    // { id: 'user', label: 'Users', icon: User },
   ];
 
   return (
@@ -53,11 +53,10 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
               <button
                 key={item.id}
                 onClick={() => onSectionChange(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
                     ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
-                }`}
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{item.label}</span>

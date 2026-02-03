@@ -21,7 +21,7 @@ type Section =
   | 'rsvp'
   | 'menu'
   | 'day-program'
-  | 'user';
+  // | 'user';
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<Section>('hero');
@@ -44,8 +44,8 @@ export default function Dashboard() {
         return <MenuManager />;
       case 'day-program':
         return <DayProgramManager />;
-      case 'user':
-        return <UserManager />;
+      // case 'user':
+      //   return <UserManager />;
       default:
         return <HeroManager />;
     }
