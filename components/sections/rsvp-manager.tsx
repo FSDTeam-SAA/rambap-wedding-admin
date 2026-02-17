@@ -21,8 +21,7 @@ type Rsvp = {
 };
 
 export function RsvpManager() {
-  const queryClient = useQueryClient();
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU'
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE';
 
   // ── Fetch all RSVPs ──────────────────────────────────────────
   const { data: rsvps = [], isLoading, isError, error } = useQuery<Rsvp[]>({
@@ -56,7 +55,6 @@ export function RsvpManager() {
   // Stats
   const attending = rsvps.filter((r) => r.attendance === true).length;
   const notAttending = rsvps.filter((r) => r.attendance === false).length;
-  const pending = rsvps.filter((r) => r.attendance === null || r.attendance === undefined).length;
 
 
 
@@ -89,7 +87,7 @@ export function RsvpManager() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="border rounded-xl p-6 bg-green-50/50 dark:bg-green-950/30">
           <p className="text-sm text-green-700 dark:text-green-300">Attending</p>
           <p className="text-3xl font-bold mt-2">{attending}</p>
@@ -98,10 +96,10 @@ export function RsvpManager() {
           <p className="text-sm text-red-700 dark:text-red-300">Not Attending</p>
           <p className="text-3xl font-bold mt-2">{notAttending}</p>
         </div>
-        <div className="border rounded-xl p-6 bg-yellow-50/50 dark:bg-yellow-950/30">
+        {/* <div className="border rounded-xl p-6 bg-yellow-50/50 dark:bg-yellow-950/30">
           <p className="text-sm text-yellow-700 dark:text-yellow-300">Pending</p>
           <p className="text-3xl font-bold mt-2">{pending}</p>
-        </div>
+        </div> */}
       </div>
 
       {/* Search */}

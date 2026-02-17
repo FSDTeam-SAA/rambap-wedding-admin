@@ -15,6 +15,7 @@ type Hero = {
   topMessage?: string;
   partnerOne: string;
   partnerTwo: string;
+  address?: string;
   weddingDate?: string;
   bottomMessage?: string;
   videoUrl?: string;
@@ -61,7 +62,6 @@ export function HeroManager() {
     },
   });
 
-  // ✅ IMPORTANT — sync form when hero or language changes
   useEffect(() => {
     if (hero && isOpen) {
       setFormData(hero);
@@ -141,6 +141,8 @@ export function HeroManager() {
 
     if (formData.topMessage !== undefined)
       payload.append('topMessage', formData.topMessage);
+     if (formData.address !== undefined)
+      payload.append('address', formData.address);
     if (formData.partnerOne)
       payload.append('partnerOne', formData.partnerOne);
     if (formData.partnerTwo)
@@ -243,6 +245,13 @@ export function HeroManager() {
                 </div>
               )}
 
+              {hero.address && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Address</p>
+                  <p className="text-sm text-muted-foreground">{hero.address}</p>
+                </div>
+              )}
+              
               {(hero.countdownTitle || hero.countdownSubtitle) && (
                 <div>
                   <p className="text-sm font-medium mb-1">Countdown Section</p>
@@ -281,7 +290,7 @@ export function HeroManager() {
 
             {/* Couple Names */}
             <section className="bg-background rounded-2xl border p-6 space-y-4 shadow-sm">
-              
+
               <h3 className="font-semibold">Couple Names</h3>
 
               <div className="grid md:grid-cols-2 gap-5">
@@ -304,6 +313,23 @@ export function HeroManager() {
                       handleInputChange("partnerTwo", e.target.value)
                     }
                     placeholder="James"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-background rounded-2xl border p-6 space-y-4 shadow-sm">
+
+              <h3 className="font-semibold">Address</h3>
+
+              <div className="grid md:grid-cols-1 gap-5">
+                <div className="space-y-2">
+                  <Input
+                    value={formData.address ?? ""}
+                    onChange={(e) =>
+                      handleInputChange("address", e.target.value)
+                    }
+                    placeholder="Address"
                   />
                 </div>
               </div>

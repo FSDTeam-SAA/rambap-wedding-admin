@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ChangeEvent, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,8 +16,13 @@ type Event = {
   subtitle?: string;
   venueName: string;
   ceremonyTime: string;
+  ceremonyTitle?: string;
+  receptionTitle?: string;
   banquetTime: string;
+  weddingTime: string;
+  weddingTitle?: string;
   address: string;
+  mapLocationTitle?: string;
   mapEmbedUrl: string;
   mapLocationLink: string;
   transportationTitle?: string;
@@ -59,7 +64,6 @@ export function EventManager() {
     },
   });
 
-  // ── Sync form when event or language changes ───────
   useEffect(() => {
     if (event && isOpen) {
       setFormData(event);
@@ -119,6 +123,8 @@ export function EventManager() {
       !formData.venueName?.trim() ||
       !formData.address?.trim() ||
       !formData.ceremonyTime?.trim() ||
+      !formData.receptionTitle?.trim() ||
+      !formData.ceremonyTitle?.trim() ||
       !formData.banquetTime?.trim() ||
       !formData.mapEmbedUrl?.trim() ||
       !formData.mapLocationLink?.trim()
@@ -300,6 +306,16 @@ export function EventManager() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="ceremonyTitle">Ceremony Title *</Label>
+                <Input
+                  id="ceremonyTitle"
+                  type="text"
+                  value={formData?.ceremonyTitle ?? ''}
+                  onChange={(e) => handleInputChange('ceremonyTitle', e.target.value)}
+                />
+              </div>
+
+              <div>
                 <Label htmlFor="ceremonyTime">Ceremony Time *</Label>
                 <Input
                   id="ceremonyTime"
@@ -308,6 +324,17 @@ export function EventManager() {
                   onChange={(e) => handleInputChange('ceremonyTime', e.target.value)}
                 />
               </div>
+
+              <div>
+                <Label htmlFor="receptionTitle">Reception Title *</Label>
+                <Input
+                  id="receptionTitle"
+                  type="text"
+                  value={formData?.receptionTitle ?? ''}
+                  onChange={(e) => handleInputChange('receptionTitle', e.target.value)}
+                />
+              </div>
+
               <div>
                 <Label htmlFor="banquetTime">Reception Time *</Label>
                 <Input
@@ -315,6 +342,26 @@ export function EventManager() {
                   type="time"
                   value={formData.banquetTime ?? ''}
                   onChange={(e) => handleInputChange('banquetTime', e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="weddingTitle">Wedding Title *</Label>
+                <Input
+                  id="weddingTitle"
+                  type="text"
+                  value={formData?.weddingTitle ?? ''}
+                  onChange={(e) => handleInputChange('weddingTitle', e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="weddingTime">Wedding Time *</Label>
+                <Input
+                  id="weddingTime"
+                  type="time"
+                  value={formData.weddingTime ?? ''}
+                  onChange={(e) => handleInputChange('weddingTime', e.target.value)}
                 />
               </div>
             </div>
@@ -330,6 +377,15 @@ export function EventManager() {
               <p className="text-xs text-muted-foreground mt-1">
                 Paste the embed code from Google Maps
               </p>
+            </div>
+            <div>
+              <Label htmlFor="mapLocationTitle">Map Location Title *</Label>
+              <Input
+                id="mapLocationTitle"
+                value={formData.mapLocationTitle ?? ''}
+                onChange={(e) => handleInputChange('mapLocationTitle', e.target.value)}
+                placeholder="e.g. Venue Location"
+              />
             </div>
 
             <div>
