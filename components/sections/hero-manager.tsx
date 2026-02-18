@@ -182,35 +182,31 @@ export function HeroManager() {
   // ── JSX ─────────────────────────────────────────────────────
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Hero Section</h2>
-          <p className="text-muted-foreground mt-1">
-            Manage the main banner / hero content for your wedding site
-          </p>
-        </div>
-
-        <Button onClick={handleOpen} className="gap-2">
+      <div className="flex justify-end items-center mb-6">
+    
+        <Button onClick={handleOpen} className="gap-2 bg-[#f59e0a] text-white">
           <Edit className="h-4 w-4" />
           Edit Hero
         </Button>
       </div>
 
-      {hero && Object.keys(hero).length > 0 ? (
-        <div className="border rounded-lg p-6 bg-card shadow-sm">
-          <div>
+       <div>
             <Button
               onClick={() => {
                 setIsLang((prev) => (prev === 'english' ? 'france' : 'english'));
               }}
               variant="outline"
               size="sm"
-              className="gap-2 mb-4"
+              className="gap-2 mb-4 hover:text-white"
             >
 
               Switch to {isLang === 'english' ? 'French' : 'English'} Version
             </Button>
           </div>
+
+      {hero && Object.keys(hero).length > 0 ? (
+        <div className="border rounded-lg p-6 bg-card shadow-sm">
+         
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <h3 className="text-xl font-semibold">
@@ -437,6 +433,7 @@ export function HeroManager() {
           <div className="sticky bottom-0 bg-background border-t px-6 py-4 flex justify-end gap-3">
             <Button
               variant="outline"
+              className="hover:text-white"
               onClick={() => setIsOpen(false)}
               disabled={isPending}
             >
@@ -445,6 +442,7 @@ export function HeroManager() {
 
             <Button
               onClick={handleSave}
+              className='text-white bg-[#f59e0a]'
               disabled={
                 isPending ||
                 !formData.partnerOne?.trim() ||

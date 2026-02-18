@@ -74,27 +74,22 @@ type GuestInfo = {
   updatedAt?: string;
 };
 
-/* ---------------- CONFIG ---------------- */
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-const GUEST_INFO_ENDPOINT = `${API_BASE}/guestInfo`;
-
-/* ---------------- COMPONENT ---------------- */
 
 export function GuestInfoManager() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<GuestInfo>>({});
+  const [isLang, setIsLang] = useState<"france" | "english">("english");
 
   // ⚠️  Consider moving this token to a more secure place (cookies, httpOnly, env + auth context)
   const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU';
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
 
   /* ---------- FETCH ---------- */
   const { data: guestInfo, isLoading, isError, error } = useQuery<GuestInfo>({
-    queryKey: ['guestInfo'],
+    queryKey: ['guestInfo',isLang],
     queryFn: async () => {
-      const res = await fetch(GUEST_INFO_ENDPOINT, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/guestInfo?lang=${isLang}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +109,7 @@ export function GuestInfoManager() {
   /* ---------- MUTATION ---------- */
   const { mutate, isPending } = useMutation({
     mutationFn: async (payload: Partial<GuestInfo>) => {
-      const res = await fetch(GUEST_INFO_ENDPOINT, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/guestInfo?lang=${isLang}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +196,6 @@ export function GuestInfoManager() {
     setIsOpen(true);
   };
 
-  /* ---------------- UI ---------------- */
   if (isLoading) {
     return (
       <div className="h-96 flex justify-center items-center">
@@ -222,18 +216,25 @@ export function GuestInfoManager() {
   return (
     <div className="p-8 space-y-6">
       {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Guest Information</h2>
-          <p className="text-muted-foreground">Manage accommodation, dress code, FAQ, gifts and more</p>
-        </div>
-
-        <Button onClick={openEditor}>
+      <div className="flex justify-end items-center">
+        <Button onClick={openEditor} className='bg-[#f59e0a] text-white'>
           <Edit className="w-4 h-4 mr-2" />
           Edit
         </Button>
       </div>
 
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 mb-4 hover:text-white"
+          onClick={() =>
+            setIsLang((prev) => (prev === "english" ? "france" : "english"))
+          }
+        >
+          Switch to {isLang === "english" ? "French" : "English"} Version
+        </Button>
+      </div>
       {/* PREVIEW */}
       <div className="grid md:grid-cols-2 gap-6">
         {guestInfo?.accommodation && <PreviewCard section={guestInfo.accommodation} />}
@@ -245,16 +246,16 @@ export function GuestInfoManager() {
 
       {/* EDIT DIALOG */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-full max-w-4xl hide-scrollbar p-0 overflow-scroll max-h-[90dvh]">
+        <DialogContent className="!max-w-4xl hide-scrollbar p-0 overflow-scroll max-h-[90dvh]">
           {/* Fixed Header */}
           <DialogHeader className="px-6 pt-6 pb-4 border-b bg-background sticky top-0 z-20">
             <DialogTitle className="text-2xl">Edit Guest Information</DialogTitle>
           </DialogHeader>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
-            <Tabs defaultValue="accommodation" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 sticky top-0 bg-background z-10 border-b mb-6">
+          <div className="flex-1 overflow-y-auto px-6 py-3">
+            <Tabs defaultValue="accommodation" className="w-full ">
+              <TabsList className=" mb-6 w-full">
                 <TabsTrigger value="accommodation">Accommodation</TabsTrigger>
                 <TabsTrigger value="carRental">Car Rental</TabsTrigger>
                 <TabsTrigger value="dressCode">Dress Code</TabsTrigger>
@@ -265,15 +266,15 @@ export function GuestInfoManager() {
               {/* ACCOMMODATION */}
               <TabsContent value="accommodation" className="space-y-6 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Title</Label>
+                  <div className='space-y-3'>
+                    <Label >Title</Label>
                     <Input
                       placeholder="Where to Stay"
                       value={formData.accommodation?.title || ''}
                       onChange={(e) => updateField('accommodation.title', e.target.value)}
                     />
                   </div>
-                  <div>
+                  <div className='space-y-3'>
                     <Label>Subtitle</Label>
                     <Input
                       placeholder="Recommended hotels nearby"
@@ -332,7 +333,7 @@ export function GuestInfoManager() {
               {/* CAR RENTAL */}
               <TabsContent value="carRental" className="space-y-6 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className='space-y-3'>
                     <Label>Title</Label>
                     <Input
                       placeholder="Getting Around"
@@ -340,7 +341,7 @@ export function GuestInfoManager() {
                       onChange={(e) => updateField('carRental.title', e.target.value)}
                     />
                   </div>
-                  <div>
+                  <div className='space-y-3'>
                     <Label>Subtitle</Label>
                     <Input
                       placeholder="Trusted rental partners"
@@ -398,7 +399,7 @@ export function GuestInfoManager() {
 
               {/* DRESS CODE */}
               <TabsContent value="dressCode" className="space-y-6 pt-2">
-                <div>
+                <div className='space-y-3'>
                   <Label>Title</Label>
                   <Input
                     placeholder="Dress Code"
@@ -460,7 +461,7 @@ export function GuestInfoManager() {
 
               {/* FAQ */}
               <TabsContent value="faq" className="space-y-6 pt-2">
-                <div>
+                <div className='space-y-3'>
                   <Label>Section Title</Label>
                   <Input
                     placeholder="Frequently Asked Questions"
@@ -512,7 +513,7 @@ export function GuestInfoManager() {
 
               {/* GIFTS */}
               <TabsContent value="gifts" className="space-y-6 pt-2">
-                <div>
+                <div className='space-y-3'>
                   <Label>Title</Label>
                   <Input
                     placeholder="Gifts & Registry"
@@ -520,7 +521,7 @@ export function GuestInfoManager() {
                     onChange={(e) => updateField('gifts.title', e.target.value)}
                   />
                 </div>
-                <div>
+                <div className='space-y-3'>
                   <Label>Subtitle</Label>
                   <Input
                     placeholder="Your presence is the greatest gift"
@@ -528,7 +529,7 @@ export function GuestInfoManager() {
                     onChange={(e) => updateField('gifts.subtitle', e.target.value)}
                   />
                 </div>
-                <div>
+                <div className='space-y-3'>
                   <Label>Description</Label>
                   <Textarea
                     placeholder="Your message about gifts, registry link, charity suggestion..."
@@ -543,10 +544,10 @@ export function GuestInfoManager() {
 
           {/* Fixed Footer */}
           <div className="flex justify-end gap-4 px-6 py-4 border-t bg-background sticky bottom-0 z-20">
-            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>
+            <Button variant="outline" className="hover:text-white" onClick={() => setIsOpen(false)} disabled={isPending}>
               Cancel
             </Button>
-            <Button onClick={() => mutate(formData)} disabled={isPending}>
+            <Button onClick={() => mutate(formData)}   className='text-white bg-[#f59e0a]' disabled={isPending}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

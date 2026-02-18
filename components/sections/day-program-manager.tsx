@@ -19,7 +19,7 @@ import { Loader2, Edit, X, Plus } from 'lucide-react';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 const PROGRAM_ENDPOINT = `${API_BASE}/details/program`;
 
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU';
+ const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
 
 type DayProgramItem = {
   time: string;
@@ -42,16 +42,17 @@ type DayProgram = {
 
 export function DayProgramManager() {
   const queryClient = useQueryClient();
+ const [isLang, setIsLang] = useState<"france" | "english">("english");
 
   // Fetch current day program
   const { data: program, isLoading, isError, error } = useQuery<DayProgram>({
-    queryKey: ['dayProgram'],
+    queryKey: ['dayProgram',isLang],
     queryFn: async () => {
-      const res = await fetch(PROGRAM_ENDPOINT, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/details/program?lang=${isLang}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -68,11 +69,11 @@ export function DayProgramManager() {
   // Update mutation (text + icons)
   const updateMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const res = await fetch(PROGRAM_ENDPOINT, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/details/program?lang=${isLang}`, {
         method: 'PUT',
         body: formData,
         headers: {
-          Authorization: `Bearer ${TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -198,14 +199,23 @@ export function DayProgramManager() {
   return (
     <div className="p-8 space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Wedding Day Program</h2>
-          <p className="text-muted-foreground">Manage the full-day timeline</p>
-        </div>
-        <Button onClick={handleOpen} className="gap-2">
+      <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+        
+        <Button onClick={handleOpen} className="gap-2 bg-[#f59e0a] text-white">
           <Edit className="h-4 w-4" />
           Edit Schedule
+        </Button>
+      </div>
+        <div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 mb-4 hover:text-white"
+          onClick={() =>
+            setIsLang((prev) => (prev === "english" ? "france" : "english"))
+          }
+        >
+          Switch to {isLang === "english" ? "French" : "English"} Version
         </Button>
       </div>
 
@@ -299,7 +309,7 @@ export function DayProgramManager() {
           <div className="space-y-8 py-6">
             {/* Title & Subtitle */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+              <div className='space-y-3'>
                 <Label htmlFor="title">Program Title *</Label>
                 <Input
                   id="title"
@@ -308,7 +318,7 @@ export function DayProgramManager() {
                   placeholder="e.g. Our Perfect Day"
                 />
               </div>
-              <div>
+              <div className='space-y-3'>
                 <Label htmlFor="subtitle">Subtitle (optional)</Label>
                 <Input
                   id="subtitle"
@@ -345,7 +355,7 @@ export function DayProgramManager() {
                     </Button>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
+                      <div >
                         <Label className="text-sm">Time *</Label>
                         <Input
                           type="time"
@@ -411,6 +421,7 @@ export function DayProgramManager() {
           <DialogFooter className="gap-3 pt-6 border-t sticky bottom-0 bg-background z-10">
             <Button
               variant="outline"
+              className="hover:text-white"
               onClick={() => setIsOpen(false)}
               disabled={updateMutation.isPending}
             >
@@ -418,6 +429,7 @@ export function DayProgramManager() {
             </Button>
             <Button
               onClick={handleSave}
+              className='text-white bg-[#f59e0a]'
               disabled={updateMutation.isPending}
             >
               {updateMutation.isPending ? (

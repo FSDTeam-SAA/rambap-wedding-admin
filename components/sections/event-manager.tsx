@@ -1,14 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Edit, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Edit, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type Event = {
   _id?: string;
@@ -33,29 +38,37 @@ type Event = {
 
 export function EventManager() {
   const queryClient = useQueryClient();
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE';
+  const token =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
 
-  const [isLang, setIsLang] = useState<'france' | 'english'>('english');
+  const [isLang, setIsLang] = useState<"france" | "english">("english");
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Event>>({});
 
   // ── Fetch Event ─────────────────────────────────────
-  const { data: event, isLoading, isError } = useQuery<Event>({
-    queryKey: ['event', isLang],
+  const {
+    data: event,
+    isLoading,
+    isError,
+  } = useQuery<Event>({
+    queryKey: ["event", isLang],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event?lang=${isLang}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/event?lang=${isLang}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (!res.ok) {
-        let msg = 'Failed to load event details';
+        let msg = "Failed to load event details";
         try {
           const err = await res.json();
           msg = err.message || msg;
-        } catch { }
+        } catch {}
         throw new Error(msg);
       }
 
@@ -73,21 +86,24 @@ export function EventManager() {
   // ── Update Event ─────────────────────────────────
   const { mutate, isPending } = useMutation({
     mutationFn: async (payload: Partial<Event>) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event?lang=${isLang}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/event?lang=${isLang}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+      );
 
       if (!res.ok) {
-        let msg = 'Failed to update event';
+        let msg = "Failed to update event";
         try {
           const err = await res.json();
           msg = err.message || msg;
-        } catch { }
+        } catch {}
         throw new Error(msg);
       }
 
@@ -95,16 +111,16 @@ export function EventManager() {
     },
 
     onSuccess: () => {
-      toast.success('Event details updated successfully!', {
-        id: 'event-update-toast',
+      toast.success("Event details updated successfully!", {
+        id: "event-update-toast",
       });
-      queryClient.invalidateQueries({ queryKey: ['event', isLang] });
+      queryClient.invalidateQueries({ queryKey: ["event", isLang] });
       setIsOpen(false);
     },
 
     onError: (err: Error) => {
-      toast.error(err.message || 'Could not save event details', {
-        id: 'event-update-toast',
+      toast.error(err.message || "Could not save event details", {
+        id: "event-update-toast",
       });
     },
   });
@@ -129,7 +145,7 @@ export function EventManager() {
       !formData.mapEmbedUrl?.trim() ||
       !formData.mapLocationLink?.trim()
     ) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -154,49 +170,64 @@ export function EventManager() {
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Event Details</h2>
-          <p className="text-muted-foreground mt-1">
-            Manage wedding ceremony and reception information
-          </p>
-        </div>
-
-        <Button onClick={handleOpen} className="gap-2">
+      <div className="flex justify-end items-center mb-6">
+        <Button onClick={handleOpen} className="gap-2 bg-[#f59e0a] text-white">
           <Edit className="h-4 w-4" />
           Edit Event
         </Button>
       </div>
-
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 mb-4 hover:text-white"
+          onClick={() =>
+            setIsLang((prev) => (prev === "english" ? "france" : "english"))
+          }
+        >
+          Switch to {isLang === "english" ? "French" : "English"} Version
+        </Button>
+      </div>
       {event && Object.keys(event).length > 0 ? (
         <div className="border rounded-lg p-6 bg-card shadow-sm">
-          <div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 mb-4"
-              onClick={() => setIsLang(prev => prev === 'english' ? 'france' : 'english')}
-            >
-              Switch to {isLang === 'english' ? 'French' : 'English'} Version
-            </Button>
-          </div>
-
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              {event.title && <h3 className="text-xl font-semibold">{event.title}</h3>}
-              {event.subtitle && <p className="text-muted-foreground">{event.subtitle}</p>}
+              {event.title && (
+                <h3 className="text-xl font-semibold">{event.title}</h3>
+              )}
+              {event.subtitle && (
+                <p className="text-muted-foreground">{event.subtitle}</p>
+              )}
 
               <div className="space-y-2">
                 <p className="font-medium">{event.venueName}</p>
                 <p className="text-sm">{event.address}</p>
 
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-3">
-                  <div>
-                    <span className="font-medium">Ceremony:</span> {event.ceremonyTime}
-                  </div>
-                  <div>
-                    <span className="font-medium">Reception:</span> {event.banquetTime}
-                  </div>
+                <div className="space-y-2 text-sm text-muted-foreground mt-3">
+                  {event.ceremonyTitle && (
+                    <div>
+                      <span className="font-medium">
+                        {event.ceremonyTitle}:
+                      </span>{" "}
+                      {event.ceremonyTime}
+                    </div>
+                  )}
+
+                  {event.receptionTitle && (
+                    <div>
+                      <span className="font-medium">
+                        {event.receptionTitle}:
+                      </span>{" "}
+                      {event.banquetTime}
+                    </div>
+                  )}
+
+                  {event.weddingTitle && (
+                    <div>
+                      <span className="font-medium">{event.weddingTitle}:</span>{" "}
+                      {event.weddingTime}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -249,171 +280,198 @@ export function EventManager() {
         </div>
       ) : (
         <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground">
-          No event details configured yet.<br />
+          No event details configured yet.
+          <br />
           Click "Edit Event" to add ceremony & reception information.
         </div>
       )}
 
       {/* ── Edit Dialog ──────────────────────────────────────────────── */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="!max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Event Details</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+          <div className="space-y-10 py-4">
+            <div className="grid grid-cols-2 gap-10">
+              <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
-                  value={formData.title ?? ''}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  value={formData.title ?? ""}
+                  onChange={(e) => handleInputChange("title", e.target.value)}
                   placeholder="e.g. Our Wedding Day"
                 />
               </div>
-              <div>
+              <div className="space-y-2"> 
                 <Label htmlFor="subtitle">Subtitle</Label>
                 <Input
                   id="subtitle"
-                  value={formData.subtitle ?? ''}
-                  onChange={(e) => handleInputChange('subtitle', e.target.value)}
+                  value={formData.subtitle ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("subtitle", e.target.value)
+                  }
                   placeholder="e.g. A Celebration of Love"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-2 gap-10">
+              <div className="space-y-2">
                 <Label htmlFor="venueName">Venue Name *</Label>
                 <Input
                   id="venueName"
-                  value={formData.venueName ?? ''}
-                  onChange={(e) => handleInputChange('venueName', e.target.value)}
+                  value={formData.venueName ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("venueName", e.target.value)
+                  }
                   placeholder="e.g. Grand Palace Hall"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="address">Address *</Label>
                 <Input
                   id="address"
-                  value={formData.address ?? ''}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  value={formData.address ?? ""}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
                   placeholder="e.g. 123 Love Street, Dhaka"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-2 gap-10">
+              <div className="space-y-2">
                 <Label htmlFor="ceremonyTitle">Ceremony Title *</Label>
                 <Input
                   id="ceremonyTitle"
                   type="text"
-                  value={formData?.ceremonyTitle ?? ''}
-                  onChange={(e) => handleInputChange('ceremonyTitle', e.target.value)}
+                  value={formData?.ceremonyTitle ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("ceremonyTitle", e.target.value)
+                  }
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="ceremonyTime">Ceremony Time *</Label>
                 <Input
                   id="ceremonyTime"
                   type="time"
-                  value={formData.ceremonyTime ?? ''}
-                  onChange={(e) => handleInputChange('ceremonyTime', e.target.value)}
+                  value={formData.ceremonyTime ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("ceremonyTime", e.target.value)
+                  }
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="receptionTitle">Reception Title *</Label>
                 <Input
                   id="receptionTitle"
                   type="text"
-                  value={formData?.receptionTitle ?? ''}
-                  onChange={(e) => handleInputChange('receptionTitle', e.target.value)}
+                  value={formData?.receptionTitle ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("receptionTitle", e.target.value)
+                  }
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="banquetTime">Reception Time *</Label>
                 <Input
                   id="banquetTime"
                   type="time"
-                  value={formData.banquetTime ?? ''}
-                  onChange={(e) => handleInputChange('banquetTime', e.target.value)}
+                  value={formData.banquetTime ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("banquetTime", e.target.value)
+                  }
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="weddingTitle">Wedding Title *</Label>
                 <Input
                   id="weddingTitle"
                   type="text"
-                  value={formData?.weddingTitle ?? ''}
-                  onChange={(e) => handleInputChange('weddingTitle', e.target.value)}
+                  value={formData?.weddingTitle ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("weddingTitle", e.target.value)
+                  }
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="weddingTime">Wedding Time *</Label>
                 <Input
                   id="weddingTime"
                   type="time"
-                  value={formData.weddingTime ?? ''}
-                  onChange={(e) => handleInputChange('weddingTime', e.target.value)}
+                  value={formData.weddingTime ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("weddingTime", e.target.value)
+                  }
                 />
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="mapEmbedUrl">Map Embed URL *</Label>
               <Input
                 id="mapEmbedUrl"
-                value={formData.mapEmbedUrl ?? ''}
-                onChange={(e) => handleInputChange('mapEmbedUrl', e.target.value)}
+                value={formData.mapEmbedUrl ?? ""}
+                onChange={(e) =>
+                  handleInputChange("mapEmbedUrl", e.target.value)
+                }
                 placeholder="https://www.google.com/maps/embed?pb=..."
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Paste the embed code from Google Maps
               </p>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="mapLocationTitle">Map Location Title *</Label>
               <Input
                 id="mapLocationTitle"
-                value={formData.mapLocationTitle ?? ''}
-                onChange={(e) => handleInputChange('mapLocationTitle', e.target.value)}
+                value={formData.mapLocationTitle ?? ""}
+                onChange={(e) =>
+                  handleInputChange("mapLocationTitle", e.target.value)
+                }
                 placeholder="e.g. Venue Location"
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="mapLocationLink">Map Location Link *</Label>
               <Input
                 id="mapLocationLink"
-                value={formData.mapLocationLink ?? ''}
-                onChange={(e) => handleInputChange('mapLocationLink', e.target.value)}
+                value={formData.mapLocationLink ?? ""}
+                onChange={(e) =>
+                  handleInputChange("mapLocationLink", e.target.value)
+                }
                 placeholder="https://maps.app.goo.gl/..."
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="transportationTitle">Transportation Title</Label>
               <Input
                 id="transportationTitle"
-                value={formData.transportationTitle ?? ''}
-                onChange={(e) => handleInputChange('transportationTitle', e.target.value)}
+                value={formData.transportationTitle ?? ""}
+                onChange={(e) =>
+                  handleInputChange("transportationTitle", e.target.value)
+                }
                 placeholder="e.g. Getting Here"
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="transportationInfo">Transportation Info</Label>
               <Textarea
                 id="transportationInfo"
-                value={formData.transportationInfo ?? ''}
-                onChange={(e) => handleInputChange('transportationInfo', e.target.value)}
+                value={formData.transportationInfo ?? ""}
+                onChange={(e) =>
+                  handleInputChange("transportationInfo", e.target.value)
+                }
                 placeholder="Parking info, shuttle service, nearest metro station, etc."
                 rows={3}
               />
@@ -421,20 +479,22 @@ export function EventManager() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>
-              Cancel
-            </Button>
             <Button
-              onClick={handleSave}
+              variant="outline"
+              className="hover:text-white"
+              onClick={() => setIsOpen(false)}
               disabled={isPending}
             >
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isPending} className='text-white bg-[#f59e0a]'>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                "Save Changes"
               )}
             </Button>
           </div>

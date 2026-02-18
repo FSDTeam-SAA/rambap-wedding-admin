@@ -1,16 +1,21 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Edit, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Edit, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 const FOOTER_ENDPOINT = `${API_BASE}/footer`; // matches your route: GET/PUT /footer
 
 type Footer = {
@@ -25,26 +30,34 @@ type Footer = {
 
 export function FooterManager() {
   const queryClient = useQueryClient();
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE';
-  const [isLang, setIsLang] = useState<'france' | 'english'>('english');
+  const token =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
+  const [isLang, setIsLang] = useState<"france" | "english">("english");
 
   // ── Fetch current Footer ─────────────────────────────────────
-  const { data: footer, isLoading, isError } = useQuery<Footer>({
-    queryKey: ['footer', isLang],
+  const {
+    data: footer,
+    isLoading,
+    isError,
+  } = useQuery<Footer>({
+    queryKey: ["footer", isLang],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/footer?lang=${isLang}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/footer?lang=${isLang}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (!res.ok) {
-        let msg = 'Failed to load footer content';
+        let msg = "Failed to load footer content";
         try {
           const err = await res.json();
           msg = err.message || msg;
-        } catch { }
+        } catch {}
         throw new Error(msg);
       }
 
@@ -57,21 +70,24 @@ export function FooterManager() {
   // ── Update Footer (upsert) ───────────────────────────────────
   const { mutate, isPending } = useMutation({
     mutationFn: async (payload: Partial<Footer>) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/footer?lang=${isLang}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/footer?lang=${isLang}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+      );
 
       if (!res.ok) {
-        let msg = 'Failed to update footer';
+        let msg = "Failed to update footer";
         try {
           const err = await res.json();
           msg = err.message || msg;
-        } catch { }
+        } catch {}
         throw new Error(msg);
       }
 
@@ -79,16 +95,16 @@ export function FooterManager() {
     },
 
     onSuccess: () => {
-      toast.success('Footer updated successfully!', {
-        id: 'footer-update-toast',
+      toast.success("Footer updated successfully!", {
+        id: "footer-update-toast",
       });
-      queryClient.invalidateQueries({ queryKey: ['footer'] });
+      queryClient.invalidateQueries({ queryKey: ["footer"] });
       setIsOpen(false);
     },
 
     onError: (err: Error) => {
-      toast.error(err.message || 'Could not save footer content', {
-        id: 'footer-update-toast',
+      toast.error(err.message || "Could not save footer content", {
+        id: "footer-update-toast",
       });
     },
   });
@@ -112,7 +128,7 @@ export function FooterManager() {
       !formData.partnerTwo?.trim() ||
       !formData.date?.trim()
     ) {
-      toast.error('Partner names and date are required');
+      toast.error("Partner names and date are required");
       return;
     }
 
@@ -137,43 +153,35 @@ export function FooterManager() {
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Footer</h2>
-          <p className="text-muted-foreground mt-1">
-            Manage the website footer content
-          </p>
-        </div>
+      <div className="flex justify-end items-center mb-6">
 
-        <Button onClick={handleOpen} className="gap-2">
+        <Button onClick={handleOpen} className="gap-2 bg-[#f59e0a] text-white">
           <Edit className="h-4 w-4" />
           Edit Footer
         </Button>
       </div>
-
+      <div>
+        <Button
+          onClick={() => {
+            setIsLang((prev) => (prev === "english" ? "france" : "english"));
+          }}
+          variant="outline"
+          size="sm"
+          className="gap-2 mb-4 hover:text-white"
+        >
+          Switch to {isLang === "english" ? "French" : "English"} Version
+        </Button>
+      </div>
       {footer && Object.keys(footer).length > 0 ? (
         <div className="border rounded-lg p-6 bg-card shadow-sm">
-          <div>
-            <Button
-              onClick={() => {
-                setIsLang((prev) => (prev === 'english' ? 'france' : 'english'));
-              }}
-              variant="outline"
-              size="sm"
-              className="gap-2 mb-4"
-            >
-
-              Switch to {isLang === 'english' ? 'French' : 'English'} Version
-            </Button>
-          </div>
           <div className="max-w-2xl mx-auto text-center space-y-4">
             <h3 className="text-xl font-semibold">
-              {footer.partnerOne} <span className="text-muted-foreground">&</span> {footer.partnerTwo}
+              {footer.partnerOne}{" "}
+              <span className="text-muted-foreground">&</span>{" "}
+              {footer.partnerTwo}
             </h3>
 
-            <p className="text-muted-foreground">
-              {footer.date}
-            </p>
+            <p className="text-muted-foreground">{footer.date}</p>
 
             {footer.footerNote && (
               <p className="text-sm text-muted-foreground mt-4">
@@ -190,7 +198,8 @@ export function FooterManager() {
         </div>
       ) : (
         <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground">
-          No footer content set yet.<br />
+          No footer content set yet.
+          <br />
           Click "Edit Footer" to add partner names, date and note.
         </div>
       )}
@@ -204,42 +213,48 @@ export function FooterManager() {
 
           <div className="space-y-5 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="partnerOne">Partner One *</Label>
                 <Input
                   id="partnerOne"
-                  value={formData.partnerOne ?? ''}
-                  onChange={(e) => handleInputChange('partnerOne', e.target.value)}
+                  value={formData.partnerOne ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("partnerOne", e.target.value)
+                  }
                   placeholder="e.g. Sarah"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="partnerTwo">Partner Two *</Label>
                 <Input
                   id="partnerTwo"
-                  value={formData.partnerTwo ?? ''}
-                  onChange={(e) => handleInputChange('partnerTwo', e.target.value)}
+                  value={formData.partnerTwo ?? ""}
+                  onChange={(e) =>
+                    handleInputChange("partnerTwo", e.target.value)
+                  }
                   placeholder="e.g. James"
                 />
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="date">Wedding Date *</Label>
               <Input
                 id="date"
                 type="date"
-                value={formData.date ?? ''}
-                onChange={(e) => handleInputChange('date', e.target.value)}
+                value={formData.date ?? ""}
+                onChange={(e) => handleInputChange("date", e.target.value)}
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="footerNote">Footer Note</Label>
               <Textarea
                 id="footerNote"
-                value={formData.footerNote ?? ''}
-                onChange={(e) => handleInputChange('footerNote', e.target.value)}
+                value={formData.footerNote ?? ""}
+                onChange={(e) =>
+                  handleInputChange("footerNote", e.target.value)
+                }
                 placeholder="e.g. With love, forever and always..."
                 rows={3}
               />
@@ -247,20 +262,21 @@ export function FooterManager() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>
-              Cancel
-            </Button>
             <Button
-              onClick={handleSave}
+              variant="outline"
+              onClick={() => setIsOpen(false)}
               disabled={isPending}
             >
+              Cancel
+            </Button>
+            <Button onClick={handleSave}   className='text-white bg-[#f59e0a]' disabled={isPending}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
-                'Save Footer'
+                "Save Footer"
               )}
             </Button>
           </div>

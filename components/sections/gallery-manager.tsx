@@ -1,21 +1,18 @@
-'use client';
+"use client";
 
-import { useState, ChangeEvent } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, ChangeEvent } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Loader2, Edit, X, Trash2 } from 'lucide-react';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-const GALLERY_ENDPOINT = `${API_BASE}/gallery`;
+} from "@/components/ui/dialog";
+import { Loader2, Edit, X, Trash2 } from "lucide-react";
 
 type Gallery = {
   _id?: string;
@@ -28,24 +25,32 @@ type Gallery = {
 
 export function GalleryManager() {
   const queryClient = useQueryClient();
-  const token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU';
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
+  const [isLang, setIsLang] = useState<"france" | "english">("english");
 
   // ── Fetch current gallery ────────────────────────────────────
-  const { data: gallery, isLoading, isError, error } = useQuery<Gallery>({
-    queryKey: ['gallery'],
+  const {
+    data: gallery,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<Gallery>({
+    queryKey: ["gallery", isLang],
     queryFn: async () => {
-      const res = await fetch(GALLERY_ENDPOINT, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${token}`, // ← add when you implement auth
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/gallery?lang=${isLang}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            // Authorization: `Bearer ${token}`, // ← add when you implement auth
+          },
         },
-      });
+      );
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Failed to load gallery');
+        throw new Error(errData.message || "Failed to load gallery");
       }
 
       const json = await res.json();
@@ -56,67 +61,76 @@ export function GalleryManager() {
   // ── Update gallery (title/subtitle + append images) ──────────
   const updateMutation = useMutation({
     mutationFn: async (formDataPayload: FormData) => {
-      const res = await fetch(GALLERY_ENDPOINT, {
-        method: 'PUT',
-        body: formDataPayload,
-        // Do NOT set 'Content-Type' → browser sets multipart/form-data automatically
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/gallery?lang=${isLang}`,
+        {
+          method: "PUT",
+          body: formDataPayload,
+          // Do NOT set 'Content-Type' → browser sets multipart/form-data automatically
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Failed to update gallery');
+        throw new Error(errData.message || "Failed to update gallery");
       }
 
       return res.json();
     },
     onSuccess: () => {
-      toast.success('Gallery updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['gallery'] });
+      toast.success("Gallery updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["gallery"] });
       setIsOpen(false);
       setSelectedFiles([]);
     },
     onError: (err: Error) => {
-      toast.error(err.message || 'Failed to update gallery');
+      toast.error(err.message || "Failed to update gallery");
     },
   });
 
   // ── Delete single image ──────────────────────────────────────
   const deleteImageMutation = useMutation({
     mutationFn: async (imageUrl: string) => {
-      const res = await fetch(`${GALLERY_ENDPOINT}/image`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/gallery/image`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ imageUrl }),
         },
-        body: JSON.stringify({ imageUrl }),
-      });
+      );
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Failed to delete image');
+        throw new Error(errData.message || "Failed to delete image");
       }
 
       return res.json();
     },
     onSuccess: () => {
-      toast.success('Image removed');
-      queryClient.invalidateQueries({ queryKey: ['gallery'] });
+      toast.success("Image removed");
+      queryClient.invalidateQueries({ queryKey: ["gallery"] });
     },
     onError: (err: Error) => {
-      toast.error(err.message || 'Failed to remove image');
+      toast.error(err.message || "Failed to remove image");
     },
   });
 
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<Gallery>>({ title: '', subtitle: '' });
+  const [formData, setFormData] = useState<Partial<Gallery>>({
+    title: "",
+    subtitle: "",
+  });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const handleOpen = () => {
     setFormData({
-      title: gallery?.title || '',
-      subtitle: gallery?.subtitle || '',
+      title: gallery?.title || "",
+      subtitle: gallery?.subtitle || "",
     });
     setSelectedFiles([]);
     setIsOpen(true);
@@ -136,19 +150,19 @@ export function GalleryManager() {
     const payload = new FormData();
 
     // Text fields
-    if (formData.title) payload.append('title', formData.title);
-    if (formData.subtitle) payload.append('subtitle', formData.subtitle);
+    if (formData.title) payload.append("title", formData.title);
+    if (formData.subtitle) payload.append("subtitle", formData.subtitle);
 
     // New files
     selectedFiles.forEach((file) => {
-      payload.append('files', file);
+      payload.append("files", file);
     });
 
     updateMutation.mutate(payload);
   };
 
   const handleRemoveExistingImage = (url: string) => {
-    if (confirm('Are you sure you want to delete this image?')) {
+    if (confirm("Are you sure you want to delete this image?")) {
       deleteImageMutation.mutate(url);
     }
   };
@@ -172,25 +186,38 @@ export function GalleryManager() {
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Gallery</h2>
-          <p className="text-muted-foreground mt-1">Manage your wedding photos</p>
-        </div>
-        <Button onClick={handleOpen} className="gap-2">
+      <div className="flex justify-end items-center mb-6">
+       
+        <Button onClick={handleOpen} className="gap-2 bg-[#f59e0a] text-white">
           <Edit className="h-4 w-4" />
           Edit Gallery
         </Button>
       </div>
-
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 mb-4 hover:text-white"
+          onClick={() =>
+            setIsLang((prev) => (prev === "english" ? "france" : "english"))
+          }
+        >
+          Switch to {isLang === "english" ? "French" : "English"} Version
+        </Button>
+      </div>
       {/* ── Current Gallery Preview ───────────────────────────────── */}
-      {gallery && (gallery.title || gallery.subtitle || gallery.images?.length > 0) ? (
+      {gallery &&
+      (gallery.title || gallery.subtitle || gallery.images?.length > 0) ? (
         <div className="border rounded-xl p-6 bg-card shadow-sm space-y-6">
           {(gallery.title || gallery.subtitle) && (
             <div className="text-center">
-              <h3 className="text-xl font-semibold">{gallery.title || 'Our Moments'}</h3>
+              <h3 className="text-xl font-semibold">
+                {gallery.title || "Our Moments"}
+              </h3>
               {gallery.subtitle && (
-                <p className="text-sm text-muted-foreground mt-1">{gallery.subtitle}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {gallery.subtitle}
+                </p>
               )}
             </div>
           )}
@@ -198,7 +225,10 @@ export function GalleryManager() {
           {gallery.images?.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {gallery.images.map((url, idx) => (
-                <div key={idx} className="group relative rounded-lg overflow-hidden border shadow-sm">
+                <div
+                  key={idx}
+                  className="group relative rounded-lg overflow-hidden border shadow-sm"
+                >
                   <img
                     src={url}
                     alt={`Gallery ${idx + 1}`}
@@ -224,7 +254,8 @@ export function GalleryManager() {
         </div>
       ) : (
         <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground bg-muted/30">
-          No gallery content yet.<br />
+          No gallery content yet.
+          <br />
           Click "Edit Gallery" to add photos and details.
         </div>
       )}
@@ -239,21 +270,25 @@ export function GalleryManager() {
           <div className="space-y-8 py-6">
             {/* Title & Subtitle */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+              <div className='space-y-3'>
                 <Label htmlFor="title">Gallery Title</Label>
                 <Input
                   id="title"
-                  value={formData.title || ''}
-                  onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+                  value={formData.title || ""}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, title: e.target.value }))
+                  }
                   placeholder="e.g. Our Wedding Moments"
                 />
               </div>
-              <div>
+              <div className='space-y-3'>
                 <Label htmlFor="subtitle">Subtitle</Label>
                 <Input
                   id="subtitle"
-                  value={formData.subtitle || ''}
-                  onChange={(e) => setFormData((p) => ({ ...p, subtitle: e.target.value }))}
+                  value={formData.subtitle || ""}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, subtitle: e.target.value }))
+                  }
                   placeholder="e.g. Love captured in every frame"
                 />
               </div>
@@ -265,7 +300,10 @@ export function GalleryManager() {
                 <Label>Current Images</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-3">
                   {gallery.images.map((url, idx) => (
-                    <div key={idx} className="relative group rounded-md overflow-hidden border">
+                    <div
+                      key={idx}
+                      className="relative group rounded-md overflow-hidden border"
+                    >
                       <img
                         src={url}
                         alt={`Current ${idx + 1}`}
@@ -296,7 +334,10 @@ export function GalleryManager() {
                 multiple
                 onChange={(e) => {
                   if (e.target.files) {
-                    setSelectedFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                    setSelectedFiles((prev) => [
+                      ...prev,
+                      ...Array.from(e.target.files!),
+                    ]);
                   }
                 }}
                 className="mt-2"
@@ -307,10 +348,15 @@ export function GalleryManager() {
 
               {selectedFiles.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-sm font-medium mb-2">Selected files ({selectedFiles.length})</p>
+                  <p className="text-sm font-medium mb-2">
+                    Selected files ({selectedFiles.length})
+                  </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {selectedFiles.map((file, idx) => (
-                      <div key={idx} className="relative border rounded-md overflow-hidden">
+                      <div
+                        key={idx}
+                        className="relative border rounded-md overflow-hidden"
+                      >
                         <img
                           src={URL.createObjectURL(file)}
                           alt={file.name}
@@ -324,7 +370,9 @@ export function GalleryManager() {
                         >
                           <X className="h-3 w-3" />
                         </Button>
-                        <p className="text-xs text-center mt-1 truncate px-1">{file.name}</p>
+                        <p className="text-xs text-center mt-1 truncate px-1">
+                          {file.name}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -334,12 +382,23 @@ export function GalleryManager() {
           </div>
 
           <div className="flex justify-end gap-4 pt-6 border-t sticky bottom-0 bg-background pb-2 z-10">
-            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={updateMutation.isPending}>
+            <Button
+              variant="outline"
+              className="hover:text-white"
+              onClick={() => setIsOpen(false)}
+              disabled={updateMutation.isPending}
+            >
               Cancel
             </Button>
             <Button
+              className='text-white bg-[#f59e0a]'
               onClick={handleSave}
-              disabled={updateMutation.isPending || (selectedFiles.length === 0 && !formData.title && !formData.subtitle)}
+              disabled={
+                updateMutation.isPending ||
+                (selectedFiles.length === 0 &&
+                  !formData.title &&
+                  !formData.subtitle)
+              }
             >
               {updateMutation.isPending ? (
                 <>
@@ -347,7 +406,7 @@ export function GalleryManager() {
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                "Save Changes"
               )}
             </Button>
           </div>

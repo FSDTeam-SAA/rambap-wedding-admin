@@ -78,13 +78,6 @@ export function RsvpManager() {
 
   return (
     <div className="p-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">RSVP Management</h2>
-          <p className="text-muted-foreground">View and update guest responses</p>
-        </div>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
