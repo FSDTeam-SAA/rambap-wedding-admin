@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,12 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Edit, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-
 type Hero = {
   _id?: string;
   topMessage?: string;
   partnerOne: string;
   partnerTwo: string;
+  address?: string;
   weddingDate?: string;
   bottomMessage?: string;
   videoUrl?: string;
@@ -27,19 +27,26 @@ type Hero = {
 
 export function HeroManager() {
   const queryClient = useQueryClient();
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MDAzMDIwOSwiZXhwIjoxNzcwNjM1MDA5fQ.sQNtfmrBUvFL2smeBVsUc7E9AE119xHC3TUjzEvOUZU'
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE';
+
+  const [isLang, setIsLang] = useState<'france' | 'english'>('english');
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<Hero>>({});
+  const [file, setFile] = useState<File | null>(null);
 
   // ── Fetch current Hero ───────────────────────────────────────
   const { data: hero, isLoading, isError } = useQuery<Hero>({
-    queryKey: ['hero'],
+    queryKey: ['hero', isLang],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/hero`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${yourTokenHere}`, // ← add if route is protected
-        },
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/hero?lang=${isLang}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (!res.ok) {
         let errorMsg = 'Failed to load hero section';
@@ -51,21 +58,29 @@ export function HeroManager() {
       }
 
       const json = await res.json();
-      // Adjust based on your sendResponse shape → usually { success: true, data: {...} }
       return json.data ?? ({} as Hero);
     },
   });
 
-  // ── Update / Create Hero (upsert) ────────────────────────────
+  useEffect(() => {
+    if (hero && isOpen) {
+      setFormData(hero);
+    }
+  }, [hero, isLang, isOpen]);
+
+  // ── Update / Create Hero ────────────────────────────
   const { mutate, isPending } = useMutation({
     mutationFn: async (formDataPayload: FormData) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/hero`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`, // ← add if route is protected
-        },
-        body: formDataPayload,
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/hero?lang=${isLang}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataPayload,
+        }
+      );
 
       if (!res.ok) {
         let errorMsg = 'Failed to save hero section';
@@ -83,7 +98,12 @@ export function HeroManager() {
       toast.success('Hero section updated successfully!', {
         id: 'hero-toast',
       });
-      queryClient.invalidateQueries({ queryKey: ['hero'] });
+
+      // ✅ language-aware invalidation
+      queryClient.invalidateQueries({
+        queryKey: ['hero', isLang],
+      });
+
       setIsOpen(false);
       setFile(null);
     },
@@ -94,10 +114,6 @@ export function HeroManager() {
       });
     },
   });
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<Hero>>({});
-  const [file, setFile] = useState<File | null>(null);
 
   const handleOpen = () => {
     setFormData(hero ?? {});
@@ -123,14 +139,22 @@ export function HeroManager() {
 
     const payload = new FormData();
 
-    // Only send fields that have values (backend merges via $set)
-    if (formData.topMessage !== undefined) payload.append('topMessage', formData.topMessage);
-    if (formData.partnerOne) payload.append('partnerOne', formData.partnerOne);
-    if (formData.partnerTwo) payload.append('partnerTwo', formData.partnerTwo);
-    if (formData.weddingDate !== undefined) payload.append('weddingDate', formData.weddingDate);
-    if (formData.bottomMessage !== undefined) payload.append('bottomMessage', formData.bottomMessage);
-    if (formData.countdownTitle !== undefined) payload.append('countdownTitle', formData.countdownTitle);
-    if (formData.countdownSubtitle !== undefined) payload.append('countdownSubtitle', formData.countdownSubtitle);
+    if (formData.topMessage !== undefined)
+      payload.append('topMessage', formData.topMessage);
+     if (formData.address !== undefined)
+      payload.append('address', formData.address);
+    if (formData.partnerOne)
+      payload.append('partnerOne', formData.partnerOne);
+    if (formData.partnerTwo)
+      payload.append('partnerTwo', formData.partnerTwo);
+    if (formData.weddingDate !== undefined)
+      payload.append('weddingDate', formData.weddingDate);
+    if (formData.bottomMessage !== undefined)
+      payload.append('bottomMessage', formData.bottomMessage);
+    if (formData.countdownTitle !== undefined)
+      payload.append('countdownTitle', formData.countdownTitle);
+    if (formData.countdownSubtitle !== undefined)
+      payload.append('countdownSubtitle', formData.countdownSubtitle);
 
     if (file) {
       payload.append('file', file);
@@ -155,6 +179,7 @@ export function HeroManager() {
     );
   }
 
+  // ── JSX ─────────────────────────────────────────────────────
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -173,6 +198,19 @@ export function HeroManager() {
 
       {hero && Object.keys(hero).length > 0 ? (
         <div className="border rounded-lg p-6 bg-card shadow-sm">
+          <div>
+            <Button
+              onClick={() => {
+                setIsLang((prev) => (prev === 'english' ? 'france' : 'english'));
+              }}
+              variant="outline"
+              size="sm"
+              className="gap-2 mb-4"
+            >
+
+              Switch to {isLang === 'english' ? 'French' : 'English'} Version
+            </Button>
+          </div>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <h3 className="text-xl font-semibold">
@@ -195,7 +233,7 @@ export function HeroManager() {
             <div className="space-y-6">
               {hero.videoUrl && (
                 <div>
-                  <p className="text-sm font-medium mb-1">Background Video</p>
+                  <p className="text-sm font-medium mb-1">Background Image</p>
                   <a
                     href={hero.videoUrl}
                     target="_blank"
@@ -207,6 +245,13 @@ export function HeroManager() {
                 </div>
               )}
 
+              {hero.address && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Address</p>
+                  <p className="text-sm text-muted-foreground">{hero.address}</p>
+                </div>
+              )}
+              
               {(hero.countdownTitle || hero.countdownSubtitle) && (
                 <div>
                   <p className="text-sm font-medium mb-1">Countdown Section</p>
@@ -216,7 +261,7 @@ export function HeroManager() {
                   )}
                 </div>
               )}
-            </div>Common Questions
+            </div>
           </div>
         </div>
       ) : (
@@ -245,6 +290,7 @@ export function HeroManager() {
 
             {/* Couple Names */}
             <section className="bg-background rounded-2xl border p-6 space-y-4 shadow-sm">
+
               <h3 className="font-semibold">Couple Names</h3>
 
               <div className="grid md:grid-cols-2 gap-5">
@@ -267,6 +313,23 @@ export function HeroManager() {
                       handleInputChange("partnerTwo", e.target.value)
                     }
                     placeholder="James"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-background rounded-2xl border p-6 space-y-4 shadow-sm">
+
+              <h3 className="font-semibold">Address</h3>
+
+              <div className="grid md:grid-cols-1 gap-5">
+                <div className="space-y-2">
+                  <Input
+                    value={formData.address ?? ""}
+                    onChange={(e) =>
+                      handleInputChange("address", e.target.value)
+                    }
+                    placeholder="Address"
                   />
                 </div>
               </div>
@@ -345,26 +408,26 @@ export function HeroManager() {
               </div>
             </section>
 
-            {/* Background Video */}
+            {/* Background Image */}
             <section className="bg-background rounded-2xl border p-6 space-y-4 shadow-sm">
-              <h3 className="font-semibold">Background Video</h3>
+              <h3 className="font-semibold">Background Image</h3>
 
               <div className="border-2 border-dashed rounded-xl p-6 text-center hover:bg-muted/40 transition">
                 <Input
                   type="file"
-                  accept="video/mp4,video/webm,video/ogg"
+                  accept='image/*'
                   onChange={handleFileChange}
                   className="cursor-pointer"
                 />
 
                 <p className="text-xs text-muted-foreground mt-2">
-                  MP4, WebM or OGG • Max recommended 50MB
+                  JPG, PNG or GIF • Max recommended 10MB
                 </p>
               </div>
 
               {file && (
                 <p className="text-sm">
-                  🎬 {file.name} • {(file.size / 1024 / 1024).toFixed(1)} MB
+                  {file.name} • {(file.size / 1024 / 1024).toFixed(1)} MB
                 </p>
               )}
             </section>
