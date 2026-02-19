@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Edit, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 const FOOTER_ENDPOINT = `${API_BASE}/footer`; // matches your route: GET/PUT /footer
@@ -30,9 +31,10 @@ type Footer = {
 
 export function FooterManager() {
   const queryClient = useQueryClient();
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
-  const [isLang, setIsLang] = useState<"france" | "english">("english");
+  const { data: session } = useSession();
+    const token = (session?.user as { accessToken: string })?.accessToken;
+
+    const [isLang, setIsLang] = useState<"france" | "english">("english");
 
   // ── Fetch current Footer ─────────────────────────────────────
   const {

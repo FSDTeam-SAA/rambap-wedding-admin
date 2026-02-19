@@ -15,11 +15,10 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Edit, X, Plus } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 const PROGRAM_ENDPOINT = `${API_BASE}/details/program`;
-
- const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
 
 type DayProgramItem = {
   time: string;
@@ -41,6 +40,9 @@ type DayProgram = {
 };
 
 export function DayProgramManager() {
+    const { data: session } = useSession();
+  const token = (session?.user as { accessToken: string })?.accessToken;
+
   const queryClient = useQueryClient();
  const [isLang, setIsLang] = useState<"france" | "english">("english");
 

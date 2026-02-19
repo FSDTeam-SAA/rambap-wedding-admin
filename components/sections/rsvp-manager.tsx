@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 
 import { Loader2, Search } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 const RSVP_ENDPOINT = `${API_BASE}/rsvp`;
@@ -21,8 +22,8 @@ type Rsvp = {
 };
 
 export function RsvpManager() {
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE';
-
+   const { data: session } = useSession();
+     const token = (session?.user as { accessToken: string })?.accessToken;
   // ── Fetch all RSVPs ──────────────────────────────────────────
   const { data: rsvps = [], isLoading, isError, error } = useQuery<Rsvp[]>({
     queryKey: ['rsvps'],

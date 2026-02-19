@@ -22,6 +22,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { Edit, Loader2, X, Plus } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 /* ---------------- TYPES ---------------- */
 
@@ -82,8 +83,8 @@ export function GuestInfoManager() {
   const [isLang, setIsLang] = useState<"france" | "english">("english");
 
   // ⚠️  Consider moving this token to a more secure place (cookies, httpOnly, env + auth context)
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
+ const { data: session } = useSession();
+   const token = (session?.user as { accessToken: string })?.accessToken;
 
   /* ---------- FETCH ---------- */
   const { data: guestInfo, isLoading, isError, error } = useQuery<GuestInfo>({

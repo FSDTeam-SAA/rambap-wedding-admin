@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Edit, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 type Event = {
   _id?: string;
@@ -38,8 +39,8 @@ type Event = {
 
 export function EventManager() {
   const queryClient = useQueryClient();
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
+   const { data: session } = useSession();
+     const token = (session?.user as { accessToken: string })?.accessToken;
 
   const [isLang, setIsLang] = useState<"france" | "english">("english");
   const [isOpen, setIsOpen] = useState(false);
