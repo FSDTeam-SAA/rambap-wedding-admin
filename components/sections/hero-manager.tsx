@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { Edit, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 
 type Hero = {
   _id?: string;
@@ -27,8 +28,8 @@ type Hero = {
 
 export function HeroManager() {
   const queryClient = useQueryClient();
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE';
-
+ const { data: session } = useSession();
+   const token = (session?.user as { accessToken: string })?.accessToken;
   const [isLang, setIsLang] = useState<'france' | 'english'>('english');
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Hero>>({});

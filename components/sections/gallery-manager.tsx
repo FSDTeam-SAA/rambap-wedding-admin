@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, Edit, X, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 type Gallery = {
   _id?: string;
@@ -25,8 +26,9 @@ type Gallery = {
 
 export function GalleryManager() {
   const queryClient = useQueryClient();
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2UwMjRmZmU2Mzg5ZmUxN2ZlOGY3NCIsImVtYWlsIjoiZmFyYWJpc3Vubnk1QGdtYWlsLmNvbSIsImlhdCI6MTc3MTMzNDU5NywiZXhwIjoxNzcxOTM5Mzk3fQ.mAD9YpgWT3X0IktWFaT4sgKSvhKlOEDqTsMgI5qKyfE";
-  const [isLang, setIsLang] = useState<"france" | "english">("english");
+ const { data: session } = useSession();
+   const token = (session?.user as { accessToken: string })?.accessToken;
+     const [isLang, setIsLang] = useState<"france" | "english">("english");
 
   // ── Fetch current gallery ────────────────────────────────────
   const {
