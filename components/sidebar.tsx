@@ -5,14 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  FolderOpen,
   ImageIcon,
   LogOut,
   User2,
   Award,
   ClipboardList,
   LayoutPanelLeft,
-  Settings,
   CircleFadingArrowUp,
 } from "lucide-react";
 
@@ -31,7 +29,7 @@ const navigation = [
   { name: "Event", href: "/dashboard/event-manager", icon: User2 },
   { name: "Footer", href: "/dashboard/footer-manager", icon: Award },
   { name: "Guest Info", href: "/dashboard/guestInfo-manager", icon: ClipboardList },
-  { name: "Gallery", href: "/dashboard/gallery-manager", icon: FolderOpen },
+  // { name: "Gallery", href: "/dashboard/gallery-manager", icon: FolderOpen },
   { name: "RSVP", href: "/dashboard/rsvp-manager", icon: ImageIcon },
   { name: "Menu", href: "/dashboard/menu-manager", icon: CircleFadingArrowUp },
   { name: "Day Program", href: "/dashboard/day-program-manager", icon: CircleFadingArrowUp },
