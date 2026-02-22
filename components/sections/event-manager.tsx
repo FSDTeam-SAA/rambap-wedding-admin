@@ -24,7 +24,7 @@ type Event = {
   ceremonyTime: string;
   ceremonyTitle?: string;
   receptionTitle?: string;
-  banquetTime: string;
+  receptionTime: string;
   weddingTime: string;
   weddingTitle?: string;
   address: string;
@@ -142,7 +142,7 @@ export function EventManager() {
       !formData.ceremonyTime?.trim() ||
       !formData.receptionTitle?.trim() ||
       !formData.ceremonyTitle?.trim() ||
-      !formData.banquetTime?.trim() ||
+      !formData.receptionTime?.trim() ||
       !formData.mapEmbedUrl?.trim() ||
       !formData.mapLocationLink?.trim()
     ) {
@@ -219,7 +219,7 @@ export function EventManager() {
                       <span className="font-medium">
                         {event.receptionTitle}:
                       </span>{" "}
-                      {event.banquetTime}
+                      {event.receptionTime}
                     </div>
                   )}
 
@@ -379,13 +379,13 @@ export function EventManager() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="banquetTime">Reception Time *</Label>
+                <Label htmlFor="receptionTime">Reception Time *</Label>
                 <Input
-                  id="banquetTime"
+                  id="receptionTime"
                   type="time"
-                  value={formData.banquetTime ?? ""}
+                  value={formData.receptionTime ?? ""}
                   onChange={(e) =>
-                    handleInputChange("banquetTime", e.target.value)
+                    handleInputChange("receptionTime", e.target.value)
                   }
                 />
               </div>
