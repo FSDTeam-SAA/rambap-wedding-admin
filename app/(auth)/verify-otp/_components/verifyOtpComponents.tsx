@@ -64,7 +64,7 @@ export function VerifyOtp() {
   const { mutate: verifyOtp, isPending: isVerifyingOtp } = useMutation({
     mutationKey: ["verify-otp"],
     mutationFn: async ({ email, otp }: { email: string; otp: string }) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verify-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
@@ -88,7 +88,7 @@ export function VerifyOtp() {
   const { mutate: resendOtp, isPending: isResending } = useMutation({
     mutationKey: ["resend-otp"],
     mutationFn: async (email: string) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/forgot-password`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

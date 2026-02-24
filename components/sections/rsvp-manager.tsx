@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
-
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Printer } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { Button } from '../ui/button';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 const RSVP_ENDPOINT = `${API_BASE}/rsvp`;
@@ -13,7 +13,7 @@ const RSVP_ENDPOINT = `${API_BASE}/rsvp`;
 type Rsvp = {
   _id: string;
   guestName: string;
-  attendance: boolean; // true = attending, false = not attending
+  attendance: boolean;
   guestNumber?: number;
   mealPreference?: string;
   message?: string;
@@ -22,9 +22,9 @@ type Rsvp = {
 };
 
 export function RsvpManager() {
-   const { data: session } = useSession();
-     const token = (session?.user as { accessToken: string })?.accessToken;
-  // ── Fetch all RSVPs ──────────────────────────────────────────
+  const { data: session } = useSession();
+  const token = (session?.user as { accessToken: string })?.accessToken;
+  
   const { data: rsvps = [], isLoading, isError, error } = useQuery<Rsvp[]>({
     queryKey: ['rsvps'],
     queryFn: async () => {
@@ -32,7 +32,7 @@ export function RsvpManager() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // ← add when auth is ready
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -42,23 +42,33 @@ export function RsvpManager() {
       }
 
       const json = await res.json();
-      return json.data || []; // adjust if your response shape is different
+      return json.data || [];
     },
   });
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filter RSVPs by search
   const filteredRsvps = rsvps.filter((r) =>
     r.guestName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Stats
   const attending = rsvps.filter((r) => r.attendance === true).length;
   const notAttending = rsvps.filter((r) => r.attendance === false).length;
 
+  // Ref for print section
+  const printRef = useRef<HTMLDivElement>(null);
 
+  const handlePrint = () => {
+    if (!printRef.current) return;
 
+    const printContent = printRef.current.innerHTML;
+    const originalContent = document.body.innerHTML;
+
+    document.body.innerHTML = printContent;
+    window.print();
+    document.body.innerHTML = originalContent;
+    window.location.reload(); // reload to restore React state
+  };
 
   if (isLoading) {
     return (
@@ -79,6 +89,16 @@ export function RsvpManager() {
 
   return (
     <div className="p-8 space-y-8">
+      {/* Print Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={handlePrint}
+        className="gap-2 cursor-pointer bg-[#f59e0a] text-white"
+        >
+          <Printer className="h-4 w-4" />
+          Print
+        </Button>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -90,10 +110,6 @@ export function RsvpManager() {
           <p className="text-sm text-red-700 dark:text-red-300">Not Attending</p>
           <p className="text-3xl font-bold mt-2">{notAttending}</p>
         </div>
-        {/* <div className="border rounded-xl p-6 bg-yellow-50/50 dark:bg-yellow-950/30">
-          <p className="text-sm text-yellow-700 dark:text-yellow-300">Pending</p>
-          <p className="text-3xl font-bold mt-2">{pending}</p>
-        </div> */}
       </div>
 
       {/* Search */}
@@ -108,7 +124,7 @@ export function RsvpManager() {
       </div>
 
       {/* RSVP List */}
-      <div className="space-y-4">
+      <div className="space-y-4" ref={printRef}>
         {filteredRsvps.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground border border-dashed rounded-xl">
             {searchTerm ? 'No matching RSVPs found' : 'No RSVPs received yet'}
@@ -117,7 +133,7 @@ export function RsvpManager() {
           filteredRsvps.map((rsvp) => (
             <div
               key={rsvp._id}
-              className="border rounded-xl p-5 bg-card hover:bg-accent/50 transition-colors"
+              className="border rounded-xl p-5 bg-card"
             >
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="flex-1 space-y-2">
