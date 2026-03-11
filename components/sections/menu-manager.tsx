@@ -1,6 +1,404 @@
+// 'use client';
+
+// import { useState, ChangeEvent } from 'react';
+// import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// import { toast } from 'sonner';
+// import { Button } from '@/components/ui/button';
+// import { Input } from '@/components/ui/input';
+// import { Label } from '@/components/ui/label';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogFooter,
+// } from '@/components/ui/dialog';
+// import { Loader2, Edit, X, Plus } from 'lucide-react';
+// import { useSession } from 'next-auth/react';
+
+
+// type MenuCategory = {
+//   categoryName: string;
+//   items: string[];
+// };
+
+// type WeddingMenu = {
+//   _id?: string;
+//   title?: string;
+//   menuSections: MenuCategory[];
+//   printMenuUrl?: string;
+//   createdAt?: string;
+//   updatedAt?: string;
+// };
+
+// export function MenuManager() {
+//   const queryClient = useQueryClient();
+//      const { data: session } = useSession();
+//    const token = (session?.user as { accessToken: string })?.accessToken;
+
+//     const [isLang, setIsLang] = useState<"france" | "english">("english");
+
+//   // ── Fetch current menu (single document) ─────────────────────
+//   const { data: menu, isLoading, isError, error } = useQuery<WeddingMenu>({
+//     queryKey: ['menu',isLang],
+//     queryFn: async () => {
+//       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/details/menu?lang=${isLang}`, {
+//         method: 'GET',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${token}`, 
+//         },
+//       });
+
+//       if (!res.ok) {
+//         const err = await res.json().catch(() => ({}));
+//         throw new Error(err.message || 'Failed to load menu');
+//       }
+
+//       const json = await res.json();
+//       return json.data ?? { menuSections: [] };
+//     },
+//   });
+
+//   // ── Update menu (upsert) ─────────────────────────────────────
+//   const updateMutation = useMutation({
+//     mutationFn: async (payload: Partial<WeddingMenu>) => {
+//       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/details/menu?lang=${isLang}`, {
+//         method: 'PUT',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify(payload),
+//       });
+
+//       if (!res.ok) {
+//         const err = await res.json().catch(() => ({}));
+//         throw new Error(err.message || 'Failed to update menu');
+//       }
+
+//       return res.json();
+//     },
+//     onSuccess: () => {
+//       toast.success('Menu updated successfully');
+//       queryClient.invalidateQueries({ queryKey: ['menu'] });
+//       setIsOpen(false);
+//     },
+//     onError: (err: Error) => {
+//       toast.error(err.message || 'Failed to update menu');
+//     },
+//   });
+
+//   const [isOpen, setIsOpen] = useState(false);
+//   const [formData, setFormData] = useState<Partial<WeddingMenu>>({});
+
+//   const handleOpen = () => {
+//     setFormData({
+//       title: menu?.title || '',
+//       menuSections: menu?.menuSections || [],
+
+//     });
+//     setIsOpen(true);
+//   };
+
+//   // ── Helpers for nested menu sections ─────────────────────────
+//   const updateField = (field: keyof WeddingMenu, value: any) => {
+//     setFormData((prev) => ({ ...prev, [field]: value }));
+//   };
+
+//   const addSection = () => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       menuSections: [...(prev.menuSections || []), { categoryName: '', items: [] }],
+//     }));
+//   };
+
+//   const removeSection = (index: number) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       menuSections: (prev.menuSections || []).filter((_, i) => i !== index),
+//     }));
+//   };
+
+//   const updateSectionName = (index: number, name: string) => {
+//     setFormData((prev) => {
+//       const sections = [...(prev.menuSections || [])];
+//       sections[index] = { ...sections[index], categoryName: name };
+//       return { ...prev, menuSections: sections };
+//     });
+//   };
+
+//   const addItemToSection = (sectionIndex: number, item: string) => {
+//     if (!item.trim()) return;
+//     setFormData((prev) => {
+//       const sections = [...(prev.menuSections || [])];
+//       sections[sectionIndex] = {
+//         ...sections[sectionIndex],
+//         items: [...(sections[sectionIndex].items || []), item.trim()],
+//       };
+//       return { ...prev, menuSections: sections };
+//     });
+//   };
+
+//   const removeItemFromSection = (sectionIndex: number, itemIndex: number) => {
+//     setFormData((prev) => {
+//       const sections = [...(prev.menuSections || [])];
+//       sections[sectionIndex] = {
+//         ...sections[sectionIndex],
+//         items: sections[sectionIndex].items.filter((_, i) => i !== itemIndex),
+//       };
+//       return { ...prev, menuSections: sections };
+//     });
+//   };
+
+//   const handleSave = () => {
+//     if (!formData.title?.trim()) {
+//       toast.error('Menu title is required');
+//       return;
+//     }
+//     if (formData.menuSections?.length === 0) {
+//       toast.error('Add at least one menu section');
+//       return;
+//     }
+
+//     updateMutation.mutate(formData);
+//   };
+
+//   if (isLoading) {
+//     return (
+//       <div className="p-8 flex justify-center items-center min-h-[400px]">
+//         <Loader2 className="h-10 w-10 animate-spin text-primary" />
+//       </div>
+//     );
+//   }
+
+//   if (isError) {
+//     return (
+//       <div className="p-8 text-center text-destructive">
+//         Failed to load menu
+//         <p className="text-sm mt-2">{(error as Error)?.message}</p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="p-8 space-y-8">
+//       {/* Header */}
+//       <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+    
+//         <Button onClick={handleOpen} className="gap-2 bg-[#f59e0a] text-white">
+//           <Edit className="h-4 w-4" />
+//           Edit Menu
+//         </Button>
+//       </div>
+//    <div>
+//         <Button
+//           variant="outline"
+//           size="sm"
+//           className="gap-2 mb-4 hover:text-white"
+//           onClick={() =>
+//             setIsLang((prev) => (prev === "english" ? "france" : "english"))
+//           }
+//         >
+//           Switch to {isLang === "english" ? "French" : "English"} Version
+//         </Button>
+//       </div>
+//       {/* Current Menu Preview */}
+//       {menu && (menu.title || menu.menuSections?.length > 0) ? (
+//         <div className="border rounded-xl p-6 bg-card shadow-sm space-y-6">
+//           {menu.title && (
+//             <div className="text-center">
+//               <h3 className="text-xl font-semibold">{menu.title}</h3>
+//               {/* {menu.printMenuUrl && (
+//                 <a
+//                   href={menu.printMenuUrl}
+//                   target="_blank"
+//                   rel="noopener noreferrer"
+//                   className="text-sm text-primary hover:underline mt-1 inline-block"
+//                 >
+//                   View Printable Menu →
+//                 </a>
+//               )} */}
+//             </div>
+//           )}
+
+//           <div className="space-y-6">
+//             {menu.menuSections?.map((section, idx) => (
+//               <div key={idx} className="border rounded-lg p-5">
+//                 <h4 className="font-semibold text-lg mb-3">{section.categoryName}</h4>
+//                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+//                   {section.items.map((item, itemIdx) => (
+//                     <li key={itemIdx} className="text-sm py-1 px-3 bg-muted/40 rounded">
+//                       {item}
+//                     </li>
+//                   ))}
+//                 </ul>
+//               </div>
+//             ))}
+//           </div>
+
+//           {menu.updatedAt && (
+//             <p className="text-xs text-muted-foreground text-center">
+//               Last updated: {new Date(menu.updatedAt).toLocaleDateString()}
+//             </p>
+//           )}
+//         </div>
+//       ) : (
+//         <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground bg-muted/30">
+//           No menu configured yet.<br />
+//           Click "Edit Menu" to add title, sections and items.
+//         </div>
+//       )}
+
+//       {/* Edit Dialog */}
+//       <Dialog open={isOpen} onOpenChange={setIsOpen}>
+//         <DialogContent className="!max-w-3xl max-h-[90vh] overflow-y-auto">
+//           <DialogHeader>
+//             <DialogTitle>Edit Wedding Menu</DialogTitle>
+//           </DialogHeader>
+
+//           <div className="space-y-8 py-6">
+//             {/* Title & Print URL */}
+//             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+//               <div className='space-y-3'>
+//                 <Label htmlFor="title">Menu Title *</Label>
+//                 <Input
+//                   id="title"
+//                   value={formData.title || ''}
+//                   onChange={(e) => updateField('title', e.target.value)}
+//                   placeholder="e.g. Our Wedding Menu"
+//                 />
+//               </div>
+//               {/* <div>
+//                 <Label htmlFor="printMenuUrl">Printable Menu URL (optional)</Label>
+//                 <Input
+//                   id="printMenuUrl"
+//                   value={formData.printMenuUrl || ''}
+//                   onChange={(e) => updateField('printMenuUrl', e.target.value)}
+//                   placeholder="https://example.com/menu.pdf"
+//                 />
+//               </div> */}
+//             </div>
+
+//             {/* Menu Sections */}
+//             <div>
+//               <div className="flex items-center justify-between mb-4">
+//                 <Label>Menu Sections</Label>
+//                 <Button variant="outline" size="sm" onClick={addSection}>
+//                   <Plus className="h-4 w-4 mr-2" />
+//                   Add Section
+//                 </Button>
+//               </div>
+
+//               <div className="space-y-6">
+//                 {(formData.menuSections || []).map((section, sectionIdx) => (
+//                   <div
+//                     key={sectionIdx}
+//                     className="border rounded-lg p-5 bg-muted/30 space-y-4"
+//                   >
+//                     <div className="flex items-center gap-3">
+//                       <Input
+//                         value={section.categoryName}
+//                         onChange={(e) => updateSectionName(sectionIdx, e.target.value)}
+//                         placeholder="e.g. Appetizers, Main Course, Desserts"
+//                         className="flex-1"
+//                       />
+//                       <Button
+//                         variant="ghost"
+//                         size="icon"
+//                         className="text-destructive hover:text-destructive/80"
+//                         onClick={() => removeSection(sectionIdx)}
+//                       >
+//                         <X className="h-5 w-5" />
+//                       </Button>
+//                     </div>
+
+//                     <div>
+//                       <div className="flex items-center justify-between mb-3">
+//                         <Label className="text-sm">Items</Label>
+//                         <div className="flex items-center gap-2">
+//                           <Input
+//                             placeholder="Add new item..."
+//                             onKeyDown={(e) => {
+//                               if (e.key === 'Enter') {
+//                                 addItemToSection(sectionIdx, e.currentTarget.value);
+//                                 e.currentTarget.value = '';
+//                               }
+//                             }}
+//                             className="w-64"
+//                           />
+//                           <Button
+//                             size="sm"
+//                             variant="secondary"
+//                             onClick={(e) => {
+//                               const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+//                               addItemToSection(sectionIdx, input.value);
+//                               input.value = '';
+//                             }}
+//                           >
+//                             Add
+//                           </Button>
+//                         </div>
+//                       </div>
+
+//                       <div className="space-y-2">
+//                         {section.items.map((item, itemIdx) => (
+//                           <div
+//                             key={itemIdx}
+//                             className="flex items-center justify-between bg-background border rounded px-3 py-2 text-sm"
+//                           >
+//                             <span>{item}</span>
+//                             <Button
+//                               variant="ghost"
+//                               size="icon"
+//                               className="h-8 w-8 text-destructive hover:text-destructive/80"
+//                               onClick={() => removeItemFromSection(sectionIdx, itemIdx)}
+//                             >
+//                               <X className="h-4 w-4" />
+//                             </Button>
+//                           </div>
+//                         ))}
+//                       </div>
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             </div>
+//           </div>
+
+//           <DialogFooter className="gap-3 pt-6 border-t sticky bottom-0 bg-background">
+//             <Button
+//               variant="outline"
+//               onClick={() => setIsOpen(false)}
+//               className="hover:text-white"
+//               disabled={updateMutation.isPending}
+//             >
+//               Cancel
+//             </Button>
+//             <Button
+//               className='text-white bg-[#f59e0a]'
+//               onClick={handleSave}
+//               disabled={updateMutation.isPending}
+//             >
+//               {updateMutation.isPending ? (
+//                 <>
+//                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+//                   Saving...
+//                 </>
+//               ) : (
+//                 'Save Menu'
+//               )}
+//             </Button>
+//           </DialogFooter>
+//         </DialogContent>
+//       </Dialog>
+//     </div>
+//   );
+// }
+
 'use client';
 
-import { useState, ChangeEvent } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -15,7 +413,6 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Edit, X, Plus } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-
 
 type MenuCategory = {
   categoryName: string;
@@ -33,22 +430,28 @@ type WeddingMenu = {
 
 export function MenuManager() {
   const queryClient = useQueryClient();
-     const { data: session } = useSession();
-   const token = (session?.user as { accessToken: string })?.accessToken;
+  const { data: session } = useSession();
+  const token = (session?.user as { accessToken: string })?.accessToken;
 
-    const [isLang, setIsLang] = useState<"france" | "english">("english");
+  const [isLang, setIsLang] = useState<'france' | 'english'>('english');
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<WeddingMenu>>({});
+  const [itemInputs, setItemInputs] = useState<Record<number, string>>({});
 
-  // ── Fetch current menu (single document) ─────────────────────
+  /* ---------------- Fetch Menu ---------------- */
+
   const { data: menu, isLoading, isError, error } = useQuery<WeddingMenu>({
-    queryKey: ['menu',isLang],
+    queryKey: ['menu', isLang],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/details/menu?lang=${isLang}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, 
-        },
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/details/menu?lang=${isLang}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -60,17 +463,21 @@ export function MenuManager() {
     },
   });
 
-  // ── Update menu (upsert) ─────────────────────────────────────
+  /* ---------------- Update Menu ---------------- */
+
   const updateMutation = useMutation({
     mutationFn: async (payload: Partial<WeddingMenu>) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/details/menu?lang=${isLang}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/details/menu?lang=${isLang}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -81,7 +488,7 @@ export function MenuManager() {
     },
     onSuccess: () => {
       toast.success('Menu updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['menu'] });
+      queryClient.invalidateQueries({ queryKey: ['menu', isLang] });
       setIsOpen(false);
     },
     onError: (err: Error) => {
@@ -89,19 +496,17 @@ export function MenuManager() {
     },
   });
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<WeddingMenu>>({});
+  /* ---------------- Form Helpers ---------------- */
 
   const handleOpen = () => {
     setFormData({
       title: menu?.title || '',
       menuSections: menu?.menuSections || [],
-
     });
+
     setIsOpen(true);
   };
 
-  // ── Helpers for nested menu sections ─────────────────────────
   const updateField = (field: keyof WeddingMenu, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -109,7 +514,10 @@ export function MenuManager() {
   const addSection = () => {
     setFormData((prev) => ({
       ...prev,
-      menuSections: [...(prev.menuSections || []), { categoryName: '', items: [] }],
+      menuSections: [
+        ...(prev.menuSections || []),
+        { categoryName: '', items: [] },
+      ],
     }));
   };
 
@@ -130,12 +538,15 @@ export function MenuManager() {
 
   const addItemToSection = (sectionIndex: number, item: string) => {
     if (!item.trim()) return;
+
     setFormData((prev) => {
       const sections = [...(prev.menuSections || [])];
+
       sections[sectionIndex] = {
         ...sections[sectionIndex],
-        items: [...(sections[sectionIndex].items || []), item.trim()],
+        items: [...sections[sectionIndex].items, item.trim()],
       };
+
       return { ...prev, menuSections: sections };
     });
   };
@@ -143,10 +554,12 @@ export function MenuManager() {
   const removeItemFromSection = (sectionIndex: number, itemIndex: number) => {
     setFormData((prev) => {
       const sections = [...(prev.menuSections || [])];
+
       sections[sectionIndex] = {
         ...sections[sectionIndex],
         items: sections[sectionIndex].items.filter((_, i) => i !== itemIndex),
       };
+
       return { ...prev, menuSections: sections };
     });
   };
@@ -156,7 +569,8 @@ export function MenuManager() {
       toast.error('Menu title is required');
       return;
     }
-    if (formData.menuSections?.length === 0) {
+
+    if (!formData.menuSections?.length) {
       toast.error('Add at least one menu section');
       return;
     }
@@ -164,10 +578,12 @@ export function MenuManager() {
     updateMutation.mutate(formData);
   };
 
+  /* ---------------- Loading ---------------- */
+
   if (isLoading) {
     return (
-      <div className="p-8 flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <div className="p-8 flex justify-center">
+        <Loader2 className="h-10 w-10 animate-spin" />
       </div>
     );
   }
@@ -176,81 +592,67 @@ export function MenuManager() {
     return (
       <div className="p-8 text-center text-destructive">
         Failed to load menu
-        <p className="text-sm mt-2">{(error as Error)?.message}</p>
+        <p>{(error as Error)?.message}</p>
       </div>
     );
   }
 
+  /* ---------------- UI ---------------- */
+
   return (
     <div className="p-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-    
-        <Button onClick={handleOpen} className="gap-2 bg-[#f59e0a] text-white">
+      <div className="flex justify-end">
+        <Button
+          onClick={handleOpen}
+          className="gap-2 bg-[#f59e0a] text-white"
+        >
           <Edit className="h-4 w-4" />
           Edit Menu
         </Button>
       </div>
-   <div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 mb-4 hover:text-white"
-          onClick={() =>
-            setIsLang((prev) => (prev === "english" ? "france" : "english"))
-          }
-        >
-          Switch to {isLang === "english" ? "French" : "English"} Version
-        </Button>
-      </div>
-      {/* Current Menu Preview */}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="mb-4"
+        onClick={() =>
+          setIsLang((prev) => (prev === 'english' ? 'france' : 'english'))
+        }
+      >
+        Switch to {isLang === 'english' ? 'French' : 'English'} Version
+      </Button>
+
+      {/* -------- Menu Preview -------- */}
+
       {menu && (menu.title || menu.menuSections?.length > 0) ? (
-        <div className="border rounded-xl p-6 bg-card shadow-sm space-y-6">
-          {menu.title && (
-            <div className="text-center">
-              <h3 className="text-xl font-semibold">{menu.title}</h3>
-              {/* {menu.printMenuUrl && (
-                <a
-                  href={menu.printMenuUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline mt-1 inline-block"
-                >
-                  View Printable Menu →
-                </a>
-              )} */}
+        <div className="border rounded-xl p-6 space-y-6">
+          <h3 className="text-xl font-semibold text-center">{menu.title}</h3>
+
+          {menu.menuSections.map((section, idx) => (
+            <div key={idx} className="border rounded-lg p-5">
+              <h4 className="font-semibold mb-3">{section.categoryName}</h4>
+
+              <ul className="grid md:grid-cols-2 gap-2">
+                {section.items.map((item, i) => (
+                  <li
+                    key={i}
+                    className="text-sm py-1 px-3 bg-muted/40 rounded"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
-
-          <div className="space-y-6">
-            {menu.menuSections?.map((section, idx) => (
-              <div key={idx} className="border rounded-lg p-5">
-                <h4 className="font-semibold text-lg mb-3">{section.categoryName}</h4>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {section.items.map((item, itemIdx) => (
-                    <li key={itemIdx} className="text-sm py-1 px-3 bg-muted/40 rounded">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {menu.updatedAt && (
-            <p className="text-xs text-muted-foreground text-center">
-              Last updated: {new Date(menu.updatedAt).toLocaleDateString()}
-            </p>
-          )}
+          ))}
         </div>
       ) : (
-        <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground bg-muted/30">
-          No menu configured yet.<br />
-          Click "Edit Menu" to add title, sections and items.
+        <div className="border border-dashed rounded-xl p-12 text-center">
+          No menu configured yet.
         </div>
       )}
 
-      {/* Edit Dialog */}
+      {/* -------- Edit Dialog -------- */}
+
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="!max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -258,33 +660,21 @@ export function MenuManager() {
           </DialogHeader>
 
           <div className="space-y-8 py-6">
-            {/* Title & Print URL */}
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-              <div className='space-y-3'>
-                <Label htmlFor="title">Menu Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="e.g. Our Wedding Menu"
-                />
-              </div>
-              {/* <div>
-                <Label htmlFor="printMenuUrl">Printable Menu URL (optional)</Label>
-                <Input
-                  id="printMenuUrl"
-                  value={formData.printMenuUrl || ''}
-                  onChange={(e) => updateField('printMenuUrl', e.target.value)}
-                  placeholder="https://example.com/menu.pdf"
-                />
-              </div> */}
+            <div>
+              <Label>Menu Title</Label>
+              <Input
+                value={formData.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+              />
             </div>
 
-            {/* Menu Sections */}
+            {/* Sections */}
+
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex justify-between mb-4">
                 <Label>Menu Sections</Label>
-                <Button variant="outline" size="sm" onClick={addSection}>
+
+                <Button size="sm" variant="outline" onClick={addSection}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Section
                 </Button>
@@ -294,71 +684,90 @@ export function MenuManager() {
                 {(formData.menuSections || []).map((section, sectionIdx) => (
                   <div
                     key={sectionIdx}
-                    className="border rounded-lg p-5 bg-muted/30 space-y-4"
+                    className="border rounded-lg p-5 space-y-4"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex gap-3">
                       <Input
                         value={section.categoryName}
-                        onChange={(e) => updateSectionName(sectionIdx, e.target.value)}
-                        placeholder="e.g. Appetizers, Main Course, Desserts"
-                        className="flex-1"
+                        onChange={(e) =>
+                          updateSectionName(sectionIdx, e.target.value)
+                        }
+                        placeholder="Section name"
                       />
+
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive/80"
                         onClick={() => removeSection(sectionIdx)}
                       >
-                        <X className="h-5 w-5" />
+                        <X />
                       </Button>
                     </div>
 
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <Label className="text-sm">Items</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            placeholder="Add new item..."
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                addItemToSection(sectionIdx, e.currentTarget.value);
-                                e.currentTarget.value = '';
-                              }
-                            }}
-                            className="w-64"
-                          />
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={(e) => {
-                              const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                              addItemToSection(sectionIdx, input.value);
-                              input.value = '';
-                            }}
-                          >
-                            Add
-                          </Button>
-                        </div>
+                    {/* Items */}
+
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Add item"
+                          value={itemInputs[sectionIdx] || ''}
+                          onChange={(e) =>
+                            setItemInputs((prev) => ({
+                              ...prev,
+                              [sectionIdx]: e.target.value,
+                            }))
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              addItemToSection(
+                                sectionIdx,
+                                itemInputs[sectionIdx] || ''
+                              );
+
+                              setItemInputs((prev) => ({
+                                ...prev,
+                                [sectionIdx]: '',
+                              }));
+                            }
+                          }}
+                        />
+
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            addItemToSection(
+                              sectionIdx,
+                              itemInputs[sectionIdx] || ''
+                            );
+
+                            setItemInputs((prev) => ({
+                              ...prev,
+                              [sectionIdx]: '',
+                            }));
+                          }}
+                        >
+                          Add
+                        </Button>
                       </div>
 
-                      <div className="space-y-2">
-                        {section.items.map((item, itemIdx) => (
-                          <div
-                            key={itemIdx}
-                            className="flex items-center justify-between bg-background border rounded px-3 py-2 text-sm"
+                      {section.items.map((item, itemIdx) => (
+                        <div
+                          key={itemIdx}
+                          className="flex justify-between border px-3 py-2 rounded text-sm"
+                        >
+                          {item}
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              removeItemFromSection(sectionIdx, itemIdx)
+                            }
                           >
-                            <span>{item}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive/80"
-                              onClick={() => removeItemFromSection(sectionIdx, itemIdx)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -366,24 +775,20 @@ export function MenuManager() {
             </div>
           </div>
 
-          <DialogFooter className="gap-3 pt-6 border-t sticky bottom-0 bg-background">
-            <Button
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-              className="hover:text-white"
-              disabled={updateMutation.isPending}
-            >
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
+
             <Button
-              className='text-white bg-[#f59e0a]'
+              className="bg-[#f59e0a] text-white"
               onClick={handleSave}
               disabled={updateMutation.isPending}
             >
               {updateMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Saving
                 </>
               ) : (
                 'Save Menu'
